@@ -4,6 +4,8 @@ import java.util.Random;
 public class App {
     static int[] dr = { -1, 1, 0, 0 }; // up, down, left, right
     static int[] dc = { 0, 0, -1, 1 };
+    static int[] dr = { -1, 1, 0, 0 }; // up, down, left, right
+    static int[] dc = { 0, 0, -1, 1 };
     static int tries = 0;
     static int minSteps = Integer.MAX_VALUE;
     static char[][] bestMap = null;
@@ -15,11 +17,26 @@ public class App {
         int mapChoice = scInt.nextInt();
         String mapFile;
         int initialHealth = 0;
+        int initialHealth = 0;
         switch (mapChoice) {
             case 1:
                 mapFile = "Alpro_proyek/src/Z_array1.txt";
+                mapFile = "Alpro_proyek/src/Z_array1.txt";
                 break;
             case 2:
+                mapFile = "Alpro_proyek/src/Z_array2.txt";
+                break;
+            case 3:
+                mapFile = "Alpro_proyek/src/Z_array3.txt";
+                initialHealth = 200;
+                break;
+            case 4:
+                mapFile = "Alpro_proyek/src/Z_array4.txt";
+                initialHealth = 200;
+                break;
+            case 5:
+                mapFile = "Alpro_proyek/src/Z_array5.txt";
+                initialHealth = 200;
                 mapFile = "Alpro_proyek/src/Z_array2.txt";
                 break;
             case 3:
@@ -41,6 +58,7 @@ public class App {
         }
         scInt.close();
 
+        char[][] map = FileReader2DArray.read2DCharMapFromFile(mapFile);
         char[][] map = FileReader2DArray.read2DCharMapFromFile(mapFile);
         int[] start = findChar(map, 'P');
         if (start == null) {
@@ -84,6 +102,9 @@ public class App {
             if (mapChoice == 3) {
                 System.out.println("Remaining Health: " + bestHealth);
             }
+            if (mapChoice == 3) {
+                System.out.println("Remaining Health: " + bestHealth);
+            }
         } else {
             System.out.println("No path found.");
             System.out.println("Tries: " + tries);
@@ -94,6 +115,8 @@ public class App {
     static int[] findChar(char[][] map, char target) {
         for (int i = 0; i < map.length; i++) {
             for (int j = 0; j < map[0].length; j++) {
+                if (map[i][j] == target)
+                    return new int[] { i, j };
                 if (map[i][j] == target)
                     return new int[] { i, j };
             }
@@ -126,13 +149,20 @@ public class App {
             int nr = r + dr[d], nc = c + dc[d];
             if (nr >= 0 && nr < map.length && nc >= 0 && nc < map[0].length &&
                     !visited[nr][nc] && !FileReader2DArray.isWall(map, nr, nc)) {
+                    !visited[nr][nc] && !FileReader2DArray.isWall(map, nr, nc)) {
                 // Don't allow entering 'E' before getting the key
+                if (map[nr][nc] == 'E' && !hasKey)
+                    continue;
                 if (map[nr][nc] == 'E' && !hasKey)
                     continue;
                 char temp = map[nr][nc];
                 if (temp != 'E' && temp != 'P' && temp != 'K')
                     map[nr][nc] = '*'; // Mark path
+                if (temp != 'E' && temp != 'P' && temp != 'K')
+                    map[nr][nc] = '*'; // Mark path
                 backtrack(map, visited, nr, nc, steps + 1, hasKey);
+                if (temp != 'E' && temp != 'P' && temp != 'K')
+                    map[nr][nc] = ' '; // Unmark if not correct path
                 if (temp != 'E' && temp != 'P' && temp != 'K')
                     map[nr][nc] = ' '; // Unmark if not correct path
             }
