@@ -4,8 +4,6 @@ import java.util.Random;
 public class App {
     static int[] dr = { -1, 1, 0, 0 }; // up, down, left, right
     static int[] dc = { 0, 0, -1, 1 };
-    static int[] dr = { -1, 1, 0, 0 }; // up, down, left, right
-    static int[] dc = { 0, 0, -1, 1 };
     static int tries = 0;
     static int minSteps = Integer.MAX_VALUE;
     static char[][] bestMap = null;
@@ -16,7 +14,6 @@ public class App {
         System.out.print("Select map to use: ");
         int mapChoice = scInt.nextInt();
         String mapFile;
-        int initialHealth = 0;
         int initialHealth = 0;
         switch (mapChoice) {
             case 1:
@@ -39,18 +36,6 @@ public class App {
                 initialHealth = 200;
                 mapFile = "Alpro_proyek/src/Z_array2.txt";
                 break;
-            case 3:
-                mapFile = "Alpro_proyek/src/Z_array3.txt";
-                initialHealth = 200;
-                break;
-            case 4:
-                mapFile = "Alpro_proyek/src/Z_array4.txt";
-                initialHealth = 200;
-                break;
-            case 5:
-                mapFile = "Alpro_proyek/src/Z_array5.txt";
-                initialHealth = 200;
-                break;
             default:
                 System.out.println("Invalid map selection.");
                 scInt.close();
@@ -58,7 +43,6 @@ public class App {
         }
         scInt.close();
 
-        char[][] map = FileReader2DArray.read2DCharMapFromFile(mapFile);
         char[][] map = FileReader2DArray.read2DCharMapFromFile(mapFile);
         int[] start = findChar(map, 'P');
         if (start == null) {
@@ -148,7 +132,6 @@ public class App {
         for (int d = 0; d < 4; d++) {
             int nr = r + dr[d], nc = c + dc[d];
             if (nr >= 0 && nr < map.length && nc >= 0 && nc < map[0].length &&
-                    !visited[nr][nc] && !FileReader2DArray.isWall(map, nr, nc)) {
                     !visited[nr][nc] && !FileReader2DArray.isWall(map, nr, nc)) {
                 // Don't allow entering 'E' before getting the key
                 if (map[nr][nc] == 'E' && !hasKey)
