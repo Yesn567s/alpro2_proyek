@@ -86,7 +86,7 @@ public class App {
             if (mapChoice == 3) {
                 System.out.println("Remaining Health: " + bestHealth);
             }
-            if (mapChoice == 3) {
+            if (mapChoice == 4) {
                 System.out.println("Remaining Health: " + bestHealth);
             }
         } else {
