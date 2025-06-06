@@ -3,7 +3,7 @@
 #    LS  S#
 #  LLLLL E#
 #   XSSL  #
-#M   W   N#
+#        N#
 #      LS #
 #  LLLLLSS#
 #G  SLLLSS#
