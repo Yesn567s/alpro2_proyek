@@ -8,6 +8,7 @@ public class App {
     static int minSteps = Integer.MAX_VALUE;
     static char[][] bestMap = null;
     static boolean found = false;
+    static MapVisualizer visualizer;
 
     public static void main(String[] args) throws Exception {
         Scanner scInt = new Scanner(System.in);
@@ -47,7 +48,16 @@ public class App {
             System.out.println("Player not found!");
             return;
         }
-
+        ///////////////////////////////////////
+        if (mapChoice>2) {
+            visualizer = new MapVisualizer(map, initialHealth);
+            visualizer.setVisible(true);
+        }
+        else {
+            visualizer = new MapVisualizer(map);
+            visualizer.setVisible(true);
+        }
+        ///////////////////////////////////////
         if (mapChoice == 3) {
             boolean[][] visited = new boolean[map.length][map[0].length];
             backtrackWithHealth(map, visited, start[0], start[1], 0, false, initialHealth);
@@ -74,6 +84,7 @@ public class App {
             System.out.println("Tries: " + tries);
             System.out.println("Steps: " + minSteps);
             if (mapChoice == 3 || mapChoice == 4 || mapChoice == 5) {
+                visualizer.updateMap(bestMap, tries, bestHealth);
                 System.out.println("Remaining Health: " + bestHealth);
             }
         } else {
@@ -98,6 +109,7 @@ public class App {
     // Backtracking function to find path from (r, c) to 'E', must get 'K' first
     static void backtrack(char[][] map, boolean[][] visited, int r, int c, int steps, boolean hasKey) {
         tries++;
+        visualizer.updateMap(map, tries);
         if (map[r][c] == 'E' && hasKey) {
             if (steps < minSteps) {
                 minSteps = steps;
@@ -107,6 +119,7 @@ public class App {
                     bestMap[i] = map[i].clone();
                 }
             }
+            visualizer.updateMap(bestMap, tries);
             return;
         }
         visited[r][c] = true;
@@ -118,6 +131,7 @@ public class App {
         }
         for (int d = 0; d < 4; d++) {
             int nr = r + dr[d], nc = c + dc[d];
+            
             if (nr >= 0 && nr < map.length && nc >= 0 && nc < map[0].length &&
                     !visited[nr][nc] && !FileReader2DArray.isWall(map, nr, nc)) {
                 // Don't allow entering 'E' before getting the key
@@ -148,8 +162,11 @@ public class App {
     static void backtrackWithHealth(char[][] map, boolean[][] visited, int r, int c, int steps, boolean hasKey,
             int health) {
         tries++;
-        if (health <= 0)
+        visualizer.updateMap(map, tries, health);
+        if (health <= 0) {
             return;
+        }
+            
         if (map[r][c] == 'E' && hasKey) {
             if (steps < minSteps || (steps == minSteps && health > bestHealth)) {
                 minSteps = steps;
@@ -205,6 +222,7 @@ public class App {
     int r, int c, int steps, boolean hasKey,
     int health, boolean hasPickaxe, boolean hasSword, int gold
     ) {
+        visualizer.updateMap(map, tries, health);
         tries++;
         if (health <= 0) return;
         if (map[r][c] == 'E' && hasKey) {
@@ -217,6 +235,7 @@ public class App {
             }
             return;
         }
+        
         int pickaxeIdx = hasPickaxe ? 1 : 0;
         int swordIdx = hasSword ? 1 : 0;
         if (gold >= visited[0][0][0][0].length) gold = visited[0][0][0][0].length - 1; // prevent OOB
@@ -284,6 +303,7 @@ public class App {
                     map[nr][nc] = ' ';
             }
         }
+        
         // Undo actions for backtracking
         if (pickedPickaxe) hasPickaxe = false;
         if (pickedSword) hasSword = false;
@@ -368,6 +388,7 @@ static void backtrackMap5(
     int gold,
     char[][] pathMap
     ) {
+        visualizer.updateMap(pathMap, tries);
         tries++;
         // Encode state: player position, key, pickaxe, sword, gold, health, gold veins, monsters, log positions
         String state = r + "," + c + "," + hasKey + "," + hasPickaxe + "," + hasSword + "," + gold + "," + health
