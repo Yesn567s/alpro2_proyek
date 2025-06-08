@@ -1,10 +1,10 @@
 ###########
 #P       S#
-#    LS  S#
+#    LSL S#
 #  LLLLL E#
 #   XSSL  #
-#M   G   N#
-#      LS #
+#M   GS  N#
+#       S #
 #  LLLLLSS#
 #G WSLLLSS#
 ###########

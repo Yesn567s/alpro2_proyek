@@ -2,8 +2,8 @@
 #P O    GS#
 #  O    GS#
 #W A   S M#
-#LLA   SLL#
-# LS     M#
+#LLA  LSLL#
+# LSL    M#
 # LN  AAOO#
 #     A   #
 #G SSXA  E#
