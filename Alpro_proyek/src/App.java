@@ -493,6 +493,10 @@ public class App {
 
     // Move all logs in the map one step to the right on their water line
     static void moveLogs(char[][] map) {
+        // Debug: print log positions before move
+        // System.out.print("Log positions before move: ");
+        // System.out.println(encodeLogs(map));
+    
         for (int row = 0; row < map.length; row++) {
             int left = -1, right = -1;
             for (int col = 0; col < map[0].length; col++) {
@@ -511,6 +515,10 @@ public class App {
                 map[row][col] = hasLog[idx] ? 'O' : 'A';
             }
         }
+    
+        // Debug: print log positions after move
+        // System.out.print("Log positions after move: ");
+        // System.out.println(encodeLogs(map));
     }
 
     // Deep copy a 2D char array
