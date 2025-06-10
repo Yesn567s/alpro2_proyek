@@ -149,6 +149,8 @@ public class MapVisualizer extends JFrame {
             case 'X': return Color.MAGENTA;
             case 'O': return new Color(139, 69, 19); // Brown for log
             case 'A': return Color.CYAN; // Cyan for water
+            case '1': return Color.BLUE;
+            case '2': return new Color(255, 255, 0);
             default: return Color.WHITE;
         }
     }

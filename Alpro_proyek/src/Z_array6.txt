@@ -1,11 +1,10 @@
-############
-#P    N  XM#
-#          #
-#OOAAS    1#
-#        GG#
-#    W     #
-#AAAAAAAAOO#
-#          #
-#   LLLSSSD#
-#2 GLM    E#
-############
+###########
+#P    1S G#
+#        W#
+# SSL LS  #
+#G      M #
+#AAAAAAAOO#
+#X        #
+#M   LSS  #
+#N  LLE  2#
+###########
