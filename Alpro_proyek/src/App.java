@@ -122,7 +122,24 @@ public class App {
     // Backtracking function to find path from (r, c) to 'E', must get 'K' first
     static void backtrack(char[][] map, boolean[][] visited, int r, int c, int steps, boolean hasKey) {
         tries++;
+        
+        // First clear any * from the map (previous player position)
+        for (int i = 0; i < map.length; i++) {
+            for (int j = 0; j < map[0].length; j++) {
+                if (map[i][j] == '*') {
+                    map[i][j] = (map[i][j] == '*') ? '-' : map[i][j];
+                }
+            }
+        }
+        
+        // Mark current player position with *
+        char originalCell = map[r][c];
+        if (originalCell != 'P' && originalCell != 'E' && originalCell != 'K') {
+            map[r][c] = '*';
+        }
+        
         visualizer.updateMap(map, tries);
+        
         if (map[r][c] == 'E' && hasKey) {
             if (steps < minSteps) {
                 minSteps = steps;
@@ -135,6 +152,7 @@ public class App {
             visualizer.updateMap(bestMap, tries);
             return;
         }
+        
         visited[r][c] = true;
         boolean pickedKey = false;
         if (map[r][c] == 'K' && !hasKey) {
@@ -142,6 +160,7 @@ public class App {
             pickedKey = true;
             System.out.println("Key Taken");
         }
+        
         for (int d = 0; d < 4; d++) {
             int nr = r + dr[d], nc = c + dc[d];
             
@@ -150,20 +169,23 @@ public class App {
                 // Don't allow entering 'E' before getting the key
                 if (map[nr][nc] == 'E' && !hasKey)
                     continue;
-                if (map[nr][nc] == 'E' && !hasKey)
-                    continue;
+                
                 char temp = map[nr][nc];
                 if (temp != 'E' && temp != 'P' && temp != 'K')
-                    map[nr][nc] = '*'; // Mark path
-                if (temp != 'E' && temp != 'P' && temp != 'K')
-                    map[nr][nc] = '*'; // Mark path
+                    map[nr][nc] = '-'; // Mark path with -
+                    
                 backtrack(map, visited, nr, nc, steps + 1, hasKey);
-                if (temp != 'E' && temp != 'P' && temp != 'K')
-                    map[nr][nc] = ' '; // Unmark if not correct path
+                
                 if (temp != 'E' && temp != 'P' && temp != 'K')
                     map[nr][nc] = ' '; // Unmark if not correct path
             }
         }
+        
+        // Restore original cell content when backtracking
+        if (originalCell != 'P' && originalCell != 'E' && originalCell != 'K') {
+            map[r][c] = originalCell;
+        }
+        
         if (pickedKey)
             hasKey = false; // Backtrack key pickup
         visited[r][c] = false;
@@ -175,8 +197,29 @@ public class App {
     static void backtrackWithHealth(char[][] map, boolean[][] visited, int r, int c, int steps, boolean hasKey,
             int health) {
         tries++;
+        
+        // First clear any * from the map (previous player position)
+        for (int i = 0; i < map.length; i++) {
+            for (int j = 0; j < map[0].length; j++) {
+                if (map[i][j] == '*') {
+                    map[i][j] = (map[i][j] == '*') ? '-' : map[i][j];
+                }
+            }
+        }
+        
+        // Mark current player position with *
+        char originalCell = map[r][c];
+        if (originalCell != 'P' && originalCell != 'E' && originalCell != 'K' && originalCell != 'L') {
+            map[r][c] = '*';
+        }
+        
         visualizer.updateMap(map, tries, health);
+        
         if (health <= 0) {
+            // Restore original cell content when backtracking
+            if (originalCell != 'P' && originalCell != 'E' && originalCell != 'K' && originalCell != 'L') {
+                map[r][c] = originalCell;
+            }
             return;
         }
             
@@ -191,6 +234,7 @@ public class App {
             }
             return;
         }
+        
         visited[r][c] = true;
         boolean pickedKey = false;
         if (map[r][c] == 'K' && !hasKey) {
@@ -201,25 +245,36 @@ public class App {
         if (map[r][c] == 'L') {
             health -= 50;
         }
+        
         for (int d = 0; d < 4; d++) {
             int nr = r + dr[d], nc = c + dc[d];
             if (nr >= 0 && nr < map.length && nc >= 0 && nc < map[0].length &&
                     !visited[nr][nc] && !FileReader2DArray.isWall(map, nr, nc)) {
                 if (map[nr][nc] == 'E' && !hasKey)
                     continue;
+                    
                 char temp = map[nr][nc];
                 int nextHealth = health;
                 if (temp == 'L')
                     nextHealth -= 50; // Reduce health if stepping into lava
                 if (nextHealth <= 0)
                     continue; // Skip if dead
+                    
                 if (temp != 'E' && temp != 'P' && temp != 'K' && temp != 'L')
-                    map[nr][nc] = '*';
+                    map[nr][nc] = '-';
+                    
                 backtrackWithHealth(map, visited, nr, nc, steps + 1, hasKey, nextHealth);
+                
                 if (temp != 'E' && temp != 'P' && temp != 'K' && temp != 'L')
                     map[nr][nc] = ' ';
             }
         }
+        
+        // Restore original cell content when backtracking
+        if (originalCell != 'P' && originalCell != 'E' && originalCell != 'K' && originalCell != 'L') {
+            map[r][c] = originalCell;
+        }
+        
         if (pickedKey)
             hasKey = false;
         visited[r][c] = false;
@@ -235,9 +290,36 @@ public class App {
     int r, int c, int steps, boolean hasKey,
     int health, boolean hasPickaxe, boolean hasSword, int gold
     ) {
+        // First clear any * from the map (previous player position)
+        for (int i = 0; i < map.length; i++) {
+            for (int j = 0; j < map[0].length; j++) {
+                if (map[i][j] == '*') {
+                    map[i][j] = '-';
+                }
+            }
+        }
+        
+        // Mark current player position with *
+        char originalCell = map[r][c];
+        if (originalCell != 'P' && originalCell != 'E' && originalCell != 'K' && originalCell != 'L' && 
+            originalCell != 'X' && originalCell != 'G' && originalCell != 'N' && originalCell != 'W' && 
+            originalCell != 'M') {
+            map[r][c] = '*';
+        }
+        
         visualizer.updateMap(map, tries, health);
         tries++;
-        if (health <= 0) return;
+        
+        if (health <= 0) {
+            // Restore original cell if needed
+            if (originalCell != 'P' && originalCell != 'E' && originalCell != 'K' && originalCell != 'L' && 
+                originalCell != 'X' && originalCell != 'G' && originalCell != 'N' && originalCell != 'W' && 
+                originalCell != 'M' && map[r][c] == '*') {
+                map[r][c] = originalCell;
+            }
+            return;
+        }
+        
         if (map[r][c] == 'E' && hasKey) {
             if (steps < minSteps || (steps == minSteps && health > bestHealth)) {
                 minSteps = steps;
@@ -311,12 +393,19 @@ public class App {
                 char temp = map[nr][nc];
                 if (temp != 'E' && temp != 'P' && temp != 'K' && temp != 'L' && temp != 'X'
                     && temp != 'G' && temp != 'N' && temp != 'W' && temp != 'M')
-                    map[nr][nc] = '*';
+                    map[nr][nc] = '-';
                 backtrackMap4(map, visited, nr, nc, steps + 1, hasKey, health, hasPickaxe, hasSword, gold);
                 if (temp != 'E' && temp != 'P' && temp != 'K' && temp != 'L' && temp != 'X'
                     && temp != 'G' && temp != 'N' && temp != 'W' && temp != 'M')
                     map[nr][nc] = ' ';
             }
+        }
+        
+        // Restore original cell content when backtracking
+        if (originalCell != 'P' && originalCell != 'E' && originalCell != 'K' && originalCell != 'L' && 
+            originalCell != 'X' && originalCell != 'G' && originalCell != 'N' && originalCell != 'W' && 
+            originalCell != 'M' && map[r][c] == '*') {
+            map[r][c] = originalCell;
         }
         
         // Undo actions for backtracking
@@ -342,16 +431,46 @@ public class App {
         int gold,
         char[][] pathMap
         ) {
+            // First clear any * from pathMap (previous player position)
+            for (int i = 0; i < pathMap.length; i++) {
+                for (int j = 0; j < pathMap[0].length; j++) {
+                    if (pathMap[i][j] == '*') {
+                        pathMap[i][j] = '-';
+                    }
+                }
+            }
+            
+            // Mark current player position with *
+            char originalCell = pathMap[r][c];
+            boolean canBeMarked = (originalCell == ' ' || originalCell == '-');
+            if (canBeMarked) {
+                pathMap[r][c] = '*';
+            }
+            
             visualizer.updateMap(pathMap, tries);
             tries++;
+            
             // Encode state: player position, key, pickaxe, sword, gold, health, gold veins, monsters, log positions
             String state = r + "," + c + "," + hasKey + "," + hasPickaxe + "," + hasSword + "," + gold + "," + health
                 + "|" + encodeGoldVeins(map)
                 + "|" + encodeMonsters(map)
                 + "|" + encodeLogs(map);
-            if (visited.contains(state)) return;
+            if (visited.contains(state)) {
+                // Restore original cell when backtracking
+                if (canBeMarked) {
+                    pathMap[r][c] = originalCell;
+                }
+                return;
+            }
             visited.add(state);
-            if (health <= 0) return;
+            
+            if (health <= 0) {
+                // Restore original cell when backtracking
+                if (canBeMarked) {
+                    pathMap[r][c] = originalCell;
+                }
+                return;
+            }
 
             if (map[r][c] == 'E' && hasKey) {
                 if (steps < minSteps || (steps == minSteps && health > bestHealth)) {
@@ -362,6 +481,10 @@ public class App {
                         bestMap[i] = pathMap[i].clone();
                     bestHealth = health;
                     System.out.println("Found exit at (" + r + "," + c + ") in " + steps + " steps!");
+                }
+                // Restore original cell when backtracking
+                if (canBeMarked) {
+                    pathMap[r][c] = originalCell;
                 }
                 return;
             }
@@ -401,7 +524,13 @@ public class App {
                 } else {
                     health -= 100;
                     System.out.println("Attacked by monster at (" + r + "," + c + "), health now: " + health);
-                    if (health <= 0) return;
+                    if (health <= 0) {
+                        // Restore original cell when backtracking
+                        if (canBeMarked) {
+                            pathMap[r][c] = originalCell;
+                        }
+                        return;
+                    }
                 }
             }
             // NPC for buying key (now 50 gold)
@@ -416,15 +545,14 @@ public class App {
             // Reduce health if on lava
             if (map[r][c] == 'L') {
                 health -= 50;
-                if (health <= 0) return;
-            }
-
-            // Mark path for bestMap (only for the current path, not on map)
-            boolean marked = false;
-            if (pathMap[r][c] == ' ') {
-                pathMap[r][c] = '*';
-                marked = true;
-            }
+                if (health <= 0) {
+                    // Restore original cell when backtracking
+                    if (canBeMarked) {
+                        pathMap[r][c] = originalCell;
+                    }
+                    return;
+                }
+            }            // Mark path is handled by the canBeMarked condition above
 
             for (int d = 0; d < 4; d++) {
                 int nr = r + dr[d], nc = c + dc[d];
@@ -455,8 +583,12 @@ public class App {
                 backtrackMap5(newMap, visited, nr, nc, steps + 1, hasKey, health, hasPickaxe, hasSword, gold, pathMap);
             }
 
+            // Restore original cell when backtracking
+            if (canBeMarked) {
+                pathMap[r][c] = originalCell;
+            }
+            
             // Undo actions for backtracking
-            if (marked) pathMap[r][c] = ' ';
             if (pickedPickaxe) hasPickaxe = false;
             if (pickedPickaxe) map[r][c] = 'X';
             if (pickedSword) hasSword = false;
@@ -555,16 +687,46 @@ public class App {
         int gold,
         char[][] pathMap
         ) {
+            // First clear any * from pathMap (previous player position)
+            for (int i = 0; i < pathMap.length; i++) {
+                for (int j = 0; j < pathMap[0].length; j++) {
+                    if (pathMap[i][j] == '*') {
+                        pathMap[i][j] = '-';
+                    }
+                }
+            }
+            
+            // Mark current player position with *
+            char originalCell = pathMap[r][c];
+            boolean canBeMarked = (originalCell == ' ' || originalCell == '-');
+            if (canBeMarked) {
+                pathMap[r][c] = '*';
+            }
+            
             visualizer.updateMap(pathMap, tries);
             tries++;
+            
             // Encode state: player position, key, pickaxe, sword, gold, health, gold veins, monsters, log positions
             String state = r + "," + c + "," + hasKey + "," + hasPickaxe + "," + hasSword + "," + gold + "," + health
                 + "|" + encodeGoldVeins(map)
                 + "|" + encodeMonsters(map)
                 + "|" + encodeLogs(map);
-            if (visited.contains(state)) return;
+            if (visited.contains(state)) {
+                // Restore original cell when backtracking
+                if (canBeMarked) {
+                    pathMap[r][c] = originalCell;
+                }
+                return;
+            }
             visited.add(state);
-            if (health <= 0) return;
+            
+            if (health <= 0) {
+                // Restore original cell when backtracking
+                if (canBeMarked) {
+                    pathMap[r][c] = originalCell;
+                }
+                return;
+            }
 
             if (map[r][c] == 'E' && hasKey) {
                 if (steps < minSteps || (steps == minSteps && health > bestHealth)) {
@@ -575,6 +737,10 @@ public class App {
                         bestMap[i] = pathMap[i].clone();
                     bestHealth = health;
                     System.out.println("Found exit at (" + r + "," + c + ") in " + steps + " steps!");
+                }
+                // Restore original cell when backtracking
+                if (canBeMarked) {
+                    pathMap[r][c] = originalCell;
                 }
                 return;
             }
@@ -617,7 +783,7 @@ public class App {
                     if (health <= 0) return;
                 }
             }
-            // NPC for buying key (now 50 gold)
+            // NPC for buying key (now 40 gold)
             if (map[r][c] == 'N') {
                 if (gold >= 40 && !hasKey) {
                     hasKey = true;
@@ -700,7 +866,7 @@ public class App {
             if (defeatedMonster) map[r][c] = 'M';
             if (boughtKey) {
                 hasKey = false;
-                gold += 50;
+                gold += 40; // Corrected from 50 to 40
             }
         }
 }

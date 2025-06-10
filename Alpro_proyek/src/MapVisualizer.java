@@ -9,7 +9,7 @@ public class MapVisualizer extends JFrame {
     private char[][] currentMap;
     private int tries;
     private int hp;
-    private int delaypersec = 0; // SPEED
+    private int delaypersec = 5; // SPEED
 
     public MapVisualizer(char[][] initialMap) {
         this.currentMap = initialMap;
@@ -108,9 +108,21 @@ public class MapVisualizer extends JFrame {
         // Pack and center the frame
         pack();
         setLocationRelativeTo(null);
-    }
-
-    private void drawMap(Graphics g) {
+    }    private void drawMap(Graphics g) {
+        // Find player position (should be the last marked "*")
+        int playerRow = -1, playerCol = -1;
+        
+        // First scan to find the player position
+        for (int row = 0; row < currentMap.length; row++) {
+            for (int col = 0; col < currentMap[0].length; col++) {
+                if (currentMap[row][col] == '*') {
+                    playerRow = row;
+                    playerCol = col;
+                }
+            }
+        }
+        
+        // Now draw the map
         for (int row = 0; row < currentMap.length; row++) {
             for (int col = 0; col < currentMap[0].length; col++) {
                 int x = col * CELL_SIZE;
@@ -126,20 +138,29 @@ public class MapVisualizer extends JFrame {
                 
                 // Draw cell content
                 g.setColor(Color.BLACK);
+                
+                // If this is the player position, draw it differently
+                if (playerRow == row && playerCol == col && currentMap[row][col] == '*') {
+                    g.setColor(new Color(255, 0, 255)); // Magenta background for player
+                    g.fillRect(x, y, CELL_SIZE, CELL_SIZE);
+                    g.setColor(Color.GRAY);
+                    g.drawRect(x, y, CELL_SIZE, CELL_SIZE);
+                    g.setColor(Color.BLACK);
+                }
+                
                 g.drawString(String.valueOf(currentMap[row][col]), 
                            x + CELL_SIZE/3, 
                            y + 2*CELL_SIZE/3);
             }
         }
-    }
-
-    private Color getCellColor(char c) {
+    }    private Color getCellColor(char c) {
         switch (c) {
             case '#': return Color.DARK_GRAY;
             case 'P': return Color.BLUE;
             case 'E': return Color.GREEN;
             case 'K': return Color.YELLOW;
-            case '*': return new Color(173, 216, 230); // Light blue
+            case '*': return new Color(173, 216, 230); // Light blue for both player position and path
+            case '-': return new Color(173, 216, 230); // Light blue for path (kept for backward compatibility)
             case 'L': return Color.RED;
             case 'S': return Color.GRAY;
             case 'M': return new Color(139, 69, 19); // Brown
