@@ -3,6 +3,6 @@
 #   S   #
 # L    L#
 #  LS  S#
-#  SL   #
+#  SL  S#
 #LLL  SE#
 #########

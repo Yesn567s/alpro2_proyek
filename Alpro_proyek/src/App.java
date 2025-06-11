@@ -1,5 +1,7 @@
 import java.util.Scanner;
 import java.util.HashSet;
+import java.util.ArrayList;
+import java.util.List;
 
 public class App {
     static int[] dr = { -1, 1, 0, 0 }; // up, down, left, right
@@ -9,6 +11,8 @@ public class App {
     static char[][] bestMap = null;
     static boolean found = false;
     static MapVisualizer visualizer;
+    static List<char[][]> allExitMaps = new ArrayList<>();
+    static List<Integer> allExitSteps = new ArrayList<>();
 
     public static void main(String[] args) throws Exception {
         Scanner scInt = new Scanner(System.in);
@@ -41,7 +45,7 @@ public class App {
                 break;
             case 7:
                 initialHealth = 200;
-                mapFile = "Alpro_proyek/src/Z_array6.txt";
+                mapFile = "Alpro_proyek/src/Z_array7.txt";
                 break;
             default:
                 System.out.println("Invalid map selection.");
@@ -92,7 +96,21 @@ public class App {
             backtrackMap6(map, visited, start[0], start[1], 0, false, initialHealth, false, false, 0, pathMap);
         } else {
             boolean[][] visited = new boolean[map.length][map[0].length];
+            allExitMaps.clear();
+            allExitSteps.clear();
             backtrack(map, visited, start[0], start[1], 0, false);
+
+            // Print all solutions that reach the exit
+            if (!allExitMaps.isEmpty()) {
+                System.out.println("All solutions that reach the exit:");
+                for (int i = 0; i < allExitMaps.size(); i++) {
+                    System.out.println("Solution #" + (i + 1) + " (Steps: " + allExitSteps.get(i) + "):");
+                    FileReader2DArray.print2DCharMap(allExitMaps.get(i));
+                    System.out.println();
+                }
+            } else {
+                System.out.println("No path found.");
+            }
         }
 
         if (minSteps < Integer.MAX_VALUE) {
@@ -153,6 +171,14 @@ public class App {
                     bestMap[i] = map[i].clone();
                 }
             }
+            // Save every map and step that reaches the exit
+            char[][] solutionMap = new char[map.length][map[0].length];
+            for (int i = 0; i < map.length; i++) {
+                solutionMap[i] = map[i].clone();
+            }
+            allExitMaps.add(solutionMap);
+            allExitSteps.add(steps);
+
             visualizer.updateMap(bestMap, tries);
             return;
         }
