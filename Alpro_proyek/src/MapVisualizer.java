@@ -9,7 +9,7 @@ public class MapVisualizer extends JFrame {
     private char[][] currentMap;
     private int tries;
     private int hp;
-    private int delaypersec = 1; // SPEED
+    private int delaypersec = 0; // SPEED
 
     public MapVisualizer(char[][] initialMap) {
         this.currentMap = initialMap;

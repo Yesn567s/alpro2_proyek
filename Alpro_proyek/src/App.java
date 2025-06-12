@@ -13,6 +13,8 @@ public class App {
     static MapVisualizer visualizer;
     static List<char[][]> allExitMaps = new ArrayList<>();
     static List<Integer> allExitSteps = new ArrayList<>();
+    static List<Integer> allExitHealths = new ArrayList<>();
+
 
     public static void main(String[] args) throws Exception {
         Scanner scInt = new Scanner(System.in);
@@ -70,6 +72,9 @@ public class App {
             visualizer = new MapVisualizer(map); // for map 1 and 2
             visualizer.setVisible(true);
         }
+        allExitMaps.clear();
+        allExitSteps.clear();
+        allExitHealths.clear();
 
         // Backtracking
         if (mapChoice == 3 || mapChoice == 7) {
@@ -96,15 +101,47 @@ public class App {
             backtrackMap6(map, visited, start[0], start[1], 0, false, initialHealth, false, false, 0, pathMap);
         } else {
             boolean[][] visited = new boolean[map.length][map[0].length];
-            allExitMaps.clear();
-            allExitSteps.clear();
             backtrack(map, visited, start[0], start[1], 0, false);
 
             // Print all solutions that reach the exit
             if (!allExitMaps.isEmpty()) {
+                for (int i = 0; i < allExitMaps.size(); i++) {
+                    visualizer.updateMap(allExitMaps.get(i), tries);
+                    System.out.println("Showing solution #" + (i + 1) + " (Steps: " + allExitSteps.get(i) + ")");
+                    try {
+                        Thread.sleep(1000); // delay
+                    } catch (InterruptedException e) {
+                        Thread.currentThread().interrupt();
+                    }
+                }
+                visualizer.updateMap(bestMap, tries);
                 System.out.println("All solutions that reach the exit:");
                 for (int i = 0; i < allExitMaps.size(); i++) {
                     System.out.println("Solution #" + (i + 1) + " (Steps: " + allExitSteps.get(i) + "):");
+                    FileReader2DArray.print2DCharMap(allExitMaps.get(i));
+                    System.out.println();
+                }
+            } else {
+                System.out.println("No path found.");
+            }
+        }
+
+        if(mapChoice > 2) {
+            // Print all solutions that reach the exit
+            if (!allExitMaps.isEmpty()) {
+                for (int i = 0; i < allExitMaps.size(); i++) {
+                    visualizer.updateMap(allExitMaps.get(i), tries, allExitHealths.get(i));
+                    System.out.println("Showing solution #" + (i + 1) + " (Steps: " + allExitSteps.get(i) + ", Health: " + allExitHealths.get(i) + ")");
+                    try {
+                        Thread.sleep(1000); // delay
+                    } catch (InterruptedException e) {
+                        Thread.currentThread().interrupt();
+                    }
+                }
+                visualizer.updateMap(bestMap, tries);
+                System.out.println("All solutions that reach the exit:");
+                for (int i = 0; i < allExitMaps.size(); i++) {
+                    System.out.println("Solution #" + (i + 1) + " (Steps: " + allExitSteps.get(i) + ", Health: " + allExitHealths.get(i) + "):");
                     FileReader2DArray.print2DCharMap(allExitMaps.get(i));
                     System.out.println();
                 }
@@ -268,6 +305,15 @@ public class App {
                     bestMap[i] = map[i].clone();
                 }
             }
+            char[][] solutionMap = new char[map.length][map[0].length];
+            for (int i = 0; i < map.length; i++) {
+                solutionMap[i] = map[i].clone();
+            }
+            allExitMaps.add(solutionMap);
+            allExitSteps.add(steps);
+            allExitHealths.add(health);
+
+            visualizer.updateMap(bestMap, tries, health);
             return;
         }
 
@@ -363,6 +409,15 @@ public class App {
                 for (int i = 0; i < map.length; i++)
                     bestMap[i] = map[i].clone();
             }
+            char[][] solutionMap = new char[map.length][map[0].length];
+            for (int i = 0; i < map.length; i++) {
+                solutionMap[i] = map[i].clone();
+            }
+            allExitMaps.add(solutionMap);
+            allExitSteps.add(steps);
+            allExitHealths.add(health);
+
+            visualizer.updateMap(bestMap, tries, health);
             return;
         }
 
@@ -527,6 +582,15 @@ public class App {
                 bestHealth = health;
                 System.out.println("Found exit at (" + r + "," + c + ") in " + steps + " steps!");
             }
+            char[][] solutionMap = new char[map.length][map[0].length];
+            for (int i = 0; i < map.length; i++) {
+                solutionMap[i] = map[i].clone();
+            }
+            allExitMaps.add(solutionMap);
+            allExitSteps.add(steps);
+            allExitHealths.add(health);
+
+            visualizer.updateMap(bestMap, tries, health);
             // Restore original cell when backtracking
             if (canBeMarked) {
                 pathMap[r][c] = originalCell;
@@ -800,6 +864,15 @@ public class App {
                 bestHealth = health;
                 System.out.println("Found exit at (" + r + "," + c + ") in " + steps + " steps!");
             }
+            char[][] solutionMap = new char[map.length][map[0].length];
+            for (int i = 0; i < map.length; i++) {
+                solutionMap[i] = map[i].clone();
+            }
+            allExitMaps.add(solutionMap);
+            allExitSteps.add(steps);
+            allExitHealths.add(health);
+
+            visualizer.updateMap(bestMap, tries, health);
             // Restore original cell when backtracking
             if (canBeMarked) {
                 pathMap[r][c] = originalCell;
