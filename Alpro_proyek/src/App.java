@@ -582,9 +582,9 @@ public class App {
                 bestHealth = health;
                 System.out.println("Found exit at (" + r + "," + c + ") in " + steps + " steps!");
             }
-            char[][] solutionMap = new char[map.length][map[0].length];
-            for (int i = 0; i < map.length; i++) {
-                solutionMap[i] = map[i].clone();
+            char[][] solutionMap = new char[pathMap.length][pathMap[0].length];
+            for (int i = 0; i < pathMap.length; i++) {
+                solutionMap[i] = pathMap[i].clone();
             }
             allExitMaps.add(solutionMap);
             allExitSteps.add(steps);
@@ -864,9 +864,9 @@ public class App {
                 bestHealth = health;
                 System.out.println("Found exit at (" + r + "," + c + ") in " + steps + " steps!");
             }
-            char[][] solutionMap = new char[map.length][map[0].length];
-            for (int i = 0; i < map.length; i++) {
-                solutionMap[i] = map[i].clone();
+            char[][] solutionMap = new char[pathMap.length][pathMap[0].length];
+            for (int i = 0; i < pathMap.length; i++) {
+                solutionMap[i] = pathMap[i].clone();
             }
             allExitMaps.add(solutionMap);
             allExitSteps.add(steps);
