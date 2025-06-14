@@ -9,7 +9,7 @@ public class MapVisualizer extends JFrame {
     private char[][] currentMap;
     private int tries;
     private int hp;
-    private int delaypersec = 0; // SPEED
+    private int delaypersec = 0; // SPEED - small delay for smoother visualization
 
     public MapVisualizer(char[][] initialMap) {
         this.currentMap = initialMap;
@@ -46,9 +46,7 @@ public class MapVisualizer extends JFrame {
         // Create tries label
         triesLabel = new JLabel("Tries: 0");
         triesLabel.setFont(new Font("Arial", Font.BOLD, 16));
-        triesLabel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
-
-        // Add components to main panel
+        triesLabel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));        // Add components to main panel
         mainPanel.add(mapPanel, BorderLayout.CENTER);
         mainPanel.add(triesLabel, BorderLayout.SOUTH);
 
@@ -94,9 +92,7 @@ public class MapVisualizer extends JFrame {
 
         // Add labels to status panel
         statusPanel.add(triesLabel);
-        statusPanel.add(hpLabel);
-
-        // Add components to main panel
+        statusPanel.add(hpLabel);        // Add components to main panel
         mainPanel.add(mapPanel, BorderLayout.CENTER);
         mainPanel.add(statusPanel, BorderLayout.SOUTH);
 
@@ -106,9 +102,7 @@ public class MapVisualizer extends JFrame {
         // Pack and center the frame
         pack();
         setLocationRelativeTo(null);
-    }
-
-    private void drawMap(Graphics g) {
+    }    private void drawMap(Graphics g) {
         // Find player position (should be the last marked "*")
         int playerRow = -1, playerCol = -1;
 
@@ -176,8 +170,7 @@ public class MapVisualizer extends JFrame {
             case 'M':
                 return new Color(139, 69, 19); // Brown
             case 'G':
-                return Color.YELLOW;
-            case 'N':
+                return Color.YELLOW;            case 'N':
                 return Color.PINK;
             case 'W':
                 return Color.ORANGE;
@@ -208,9 +201,7 @@ public class MapVisualizer extends JFrame {
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
-    }
-
-    public void updateMap(char[][] newMap, int currentTries, int hp) {
+    }    public void updateMap(char[][] newMap, int currentTries, int hp) {
         this.currentMap = newMap;
         this.tries = currentTries;
         triesLabel.setText("Tries: " + tries);
@@ -225,4 +216,15 @@ public class MapVisualizer extends JFrame {
             e.printStackTrace();
         }
     }
+    
+    /**
+     * Forces a repaint of the map panel and ensures it's displayed immediately.
+     * This helps ensure animation steps are visible.
+     */
+    public void forceRepaint() {
+        mapPanel.paintImmediately(mapPanel.getBounds());
+    }
+  
 }
+
+
