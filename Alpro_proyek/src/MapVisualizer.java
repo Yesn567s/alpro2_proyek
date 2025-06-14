@@ -9,7 +9,7 @@ public class MapVisualizer extends JFrame {
     private char[][] currentMap;
     private int tries;
     private int hp;
-    private int delaypersec = 0; // SPEED - small delay for smoother visualization
+    private int delaypersec = 0; // SPEED
 
     public MapVisualizer(char[][] initialMap) {
         this.currentMap = initialMap;
@@ -201,7 +201,9 @@ public class MapVisualizer extends JFrame {
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
-    }    public void updateMap(char[][] newMap, int currentTries, int hp) {
+    }
+
+    public void updateMap(char[][] newMap, int currentTries, int hp) {
         this.currentMap = newMap;
         this.tries = currentTries;
         triesLabel.setText("Tries: " + tries);
@@ -215,14 +217,6 @@ public class MapVisualizer extends JFrame {
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
-    }
-    
-    /**
-     * Forces a repaint of the map panel and ensures it's displayed immediately.
-     * This helps ensure animation steps are visible.
-     */
-    public void forceRepaint() {
-        mapPanel.paintImmediately(mapPanel.getBounds());
     }
   
 }
