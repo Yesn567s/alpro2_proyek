@@ -178,7 +178,7 @@ public class App {
                         visualizer.updateMap(allExitMaps.get(i), tries, allExitHealths.get(i));
                         System.out.println("Showing solution #" + (i + 1) + " (Steps: " + allExitSteps.get(i) + ", Health: " + allExitHealths.get(i) + ")");
                         try {
-                            Thread.sleep(1000); // delay
+                            Thread.sleep(250); // delay
                         } catch (InterruptedException e) {
                             Thread.currentThread().interrupt();
                         }
