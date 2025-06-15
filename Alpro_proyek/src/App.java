@@ -678,34 +678,15 @@ public class App {
         if (steps > minSteps && minSteps != Integer.MAX_VALUE) {
             return;
         }
+          // Only update visualization occasionally to improve performance
+          // Mark the trail on empty spaces to visualize the path
+        if (map[r][c] == ' ') {
+            map[r][c] = '-'; // Mark with '-' for trail visualization
+        }
         
-        // Only update visualization occasionally to improve performance
         if (tries % 10000 == 0) {
-            // First clear any * from the map (previous player position)
-            for (int i = 0; i < map.length; i++) {
-                for (int j = 0; j < map[0].length; j++) {
-                    if (map[i][j] == '*') {
-                        map[i][j] = '-';
-                    }
-                }
-            }
-
-            // Mark current player position with *
-            char origCell = map[r][c];
-            if (origCell != 'P' && origCell != 'E' && origCell != 'K' && origCell != 'L' &&
-                    origCell != 'X' && origCell != 'G' && origCell != 'N' && origCell != 'W' &&
-                    origCell != 'M') {
-                map[r][c] = '*';
-            }
-
+            // Update visualization occasionally
             visualizer.updateMap(map, tries, health);
-            
-            // Restore cell to original state if it was marked
-            if (origCell != 'P' && origCell != 'E' && origCell != 'K' && origCell != 'L' &&
-                    origCell != 'X' && origCell != 'G' && origCell != 'N' && origCell != 'W' &&
-                    origCell != 'M' && map[r][c] == '*') {
-                map[r][c] = origCell;
-            }
         }
         tries++;
 
@@ -811,8 +792,7 @@ public class App {
             map[r][c] = ' ';
             System.out.println("Sword obtained at (" + r + "," + c + ")");
             currentMoves.add(new Movement(r, c, -1, 'W'));
-        }
-        // Gold vein
+        }        // Gold vein
         if (map[r][c] == 'G') {
             if (hasPickaxe) {
                 gold += 10;
@@ -820,6 +800,9 @@ public class App {
                 minedGold = true;
                 System.out.println("Gold mined at (" + r + "," + c + "), total gold: " + gold);
                 currentMoves.add(new Movement(r, c, -1, 'G'));
+            } else {
+                // Even if we don't have a pickaxe, we should note the gold for later
+                System.out.println("Found gold at (" + r + "," + c + ") but need pickaxe to mine it.");
             }
         }
         // Monster
@@ -942,19 +925,16 @@ public class App {
                         pathMap[i][j] = '-';
                     }
                 }
-            }
-
-            // Mark current player position with *
+            }            // Mark current player position with * (if not already marked)
             char origCell = pathMap[r][c];
-            boolean canBeMarked = (origCell == ' ' || origCell == '-');
-            if (canBeMarked) {
+            if (origCell == ' ' || origCell == '-') {
                 pathMap[r][c] = '*';
             }
             
             visualizer.updateMap(pathMap, tries, health);
             
             // Restore cell if needed
-            if (canBeMarked) {
+            if (pathMap[r][c] == '*') {
                 pathMap[r][c] = origCell;
             }
         }
@@ -1288,21 +1268,21 @@ public class App {
             (steps == minSteps && health <= bestHealth && minSteps != Integer.MAX_VALUE)) {
             return; // Don't continue if we're already worse than the best solution
         }
-        
-        // First clear any * from pathMap (previous player position)
-        for (int i = 0; i < pathMap.length; i++) {
-            for (int j = 0; j < pathMap[0].length; j++) {
-                if (pathMap[i][j] == '*') {
-                    pathMap[i][j] = '-';
-                }
-            }
+          // Mark the path in the pathMap
+        if (pathMap[r][c] == ' ') {
+            pathMap[r][c] = '-'; // Mark the trail with '-'
         }
-
-        // Mark current player position with *
+        
+        // For visualization, temporarily mark current position with *
         char originalCell = pathMap[r][c];
-        boolean canBeMarked = (originalCell == ' ' || originalCell == '-');
-        if (canBeMarked) {
-            pathMap[r][c] = '*';
+        if (tries % 10000 == 0) {
+            // Temporarily mark with * for visualization
+            if (originalCell != 'P' && originalCell != 'E' && originalCell != 'K' && 
+                originalCell != 'X' && originalCell != 'G' && originalCell != 'N' && 
+                originalCell != 'W' && originalCell != 'M' && originalCell != '1' && 
+                originalCell != '2') {
+                pathMap[r][c] = '*';
+            }
         }
 
         // Limit visualization to reduce processing
@@ -1324,10 +1304,9 @@ public class App {
         String state = r + "," + c + "," + hasKey + "," + hasPickaxe + "," + hasSword + "," + gold + "," + health
                 + "|" + encodeGoldVeins(map)
                 + "|" + encodeMonsters(map)
-                + "|" + encodeLogs(map);
-        if (visited.contains(state)) {
-            // Restore original cell when backtracking
-            if (canBeMarked) {
+                + "|" + encodeLogs(map);        if (visited.contains(state)) {
+            // Restore original cell when backtracking if it was temporarily marked for visualization
+            if (pathMap[r][c] == '*') {
                 pathMap[r][c] = originalCell;
             }
             return;
@@ -1336,7 +1315,7 @@ public class App {
 
         if (health <= 0) {
             // Restore original cell when backtracking
-            if (canBeMarked) {
+            if (pathMap[r][c] == '*') {
                 pathMap[r][c] = originalCell;
             }
             return;
@@ -1407,7 +1386,7 @@ public class App {
 
             visualizer.updateMap(bestMap, tries, health);
             // Restore original cell when backtracking
-            if (canBeMarked) {
+            if (pathMap[r][c] == '*') {
                 pathMap[r][c] = originalCell;
             }
             return;
@@ -1454,7 +1433,7 @@ public class App {
                 System.out.println("Attacked by monster at (" + r + "," + c + "), health now: " + health);
                 if (health <= 0) {
                     // Restore original cell when backtracking
-                    if (canBeMarked) {
+                    if (pathMap[r][c] == '*') {
                         pathMap[r][c] = originalCell;
                     }
                     return;
@@ -1478,7 +1457,7 @@ public class App {
             System.out.println("Stepped on lava at (" + r + "," + c + "), health now: " + health);
             if (health <= 0) {
                 // Restore original cell when backtracking
-                if (canBeMarked) {
+                if (pathMap[r][c] == '*') {
                     pathMap[r][c] = originalCell;
                 }
                 return;
@@ -1570,7 +1549,7 @@ public class App {
                 currentMoves.remove(currentMoves.size() - 1);
             }
         }        // Restore original cell when backtracking
-        if (canBeMarked) {
+        if (pathMap[r][c] == '*') {
             pathMap[r][c] = originalCell;
         }
 
@@ -1594,6 +1573,13 @@ public class App {
         if (boughtKey) {
             hasKey = false;
             gold += 50; // Restore the full gold amount
+        }
+    }
+
+    // Helper method to fix and update the visualization of trails
+    static void updateTrailVisualization(char[][] map, int r, int c) {
+        if (map[r][c] == ' ') {
+            map[r][c] = '-'; // Mark the path with '-' for trail visualization
         }
     }
 }
