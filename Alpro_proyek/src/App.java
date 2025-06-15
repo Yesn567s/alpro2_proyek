@@ -3,6 +3,24 @@ import java.util.HashSet;
 import java.util.ArrayList;
 import java.util.List;
 
+// Class to represent a movement step
+class MovementStep {
+    int row;
+    int col;
+    char type; // 'F' for forward move, 'B' for backtrack
+
+    public MovementStep(int row, int col, char type) {
+        this.row = row;
+        this.col = col;
+        this.type = type;
+    }
+    
+    @Override
+    public String toString() {
+        return (type == 'F' ? "Move to" : "Backtrack from") + " [" + row + "," + col + "]";
+    }
+}
+
 public class App {
     static int[] dr = { -1, 1, 0, 0 }; // up, down, left, right
     static int[] dc = { 0, 0, -1, 1 };
@@ -14,7 +32,10 @@ public class App {
     static List<char[][]> allExitMaps = new ArrayList<>();
     static List<Integer> allExitSteps = new ArrayList<>();
     static List<Integer> allExitHealths = new ArrayList<>();
-
+    // ArrayList to track movements in the best solution
+    static ArrayList<MovementStep> bestSolutionPath = new ArrayList<>();
+    // ArrayList to track current path during backtracking
+    static ArrayList<MovementStep> currentPath = new ArrayList<>();
 
     public static void main(String[] args) throws Exception {
         Scanner scInt = new Scanner(System.in);
@@ -173,16 +194,21 @@ public class App {
                     System.out.println("No path found.");
                 }
             }
-        }
-
-        if (minSteps < Integer.MAX_VALUE) {
+        }        if (minSteps < Integer.MAX_VALUE) {
             System.out.println("Path found:");
             FileReader2DArray.print2DCharMap(bestMap);
             System.out.println("Tries: " + tries);
             System.out.println("Steps: " + minSteps);
+            
             if (mapChoice == 3 || mapChoice == 4 || mapChoice == 5 || mapChoice == 6 || mapChoice == 7) {
                 visualizer.updateMap(bestMap, tries, bestHealth);
                 System.out.println("Remaining Health: " + bestHealth);
+            }
+            
+            // For maps 1-6, show the best path step by step (map 7 doesn't have a solution)
+            if (mapChoice >= 1 && mapChoice <= 6) {
+                char[][] originalMap = FileReader2DArray.read2DCharMapFromFile(mapFile);
+                showBestPathStepByStep(originalMap);
             }
         } else {
             System.out.println("No path found.");
@@ -216,6 +242,10 @@ public class App {
             }
         }
 
+        // Add this step to current path
+        currentPath.add(new MovementStep(r, c, 'F'));
+        System.out.println("Step " + steps + ": Move to [" + r + "," + c + "]");
+        
         // Mark current player position with *
         char originalCell = map[r][c];
         if (originalCell != 'P' && originalCell != 'E' && originalCell != 'K') {
@@ -232,6 +262,10 @@ public class App {
                 for (int i = 0; i < map.length; i++) {
                     bestMap[i] = map[i].clone();
                 }
+                
+                // Save the current path as the best solution path
+                bestSolutionPath.clear();
+                bestSolutionPath.addAll(currentPath);
             }
             // Save every map and step that reaches the exit
             char[][] solutionMap = new char[map.length][map[0].length];
@@ -242,6 +276,10 @@ public class App {
             allExitSteps.add(steps);
 
             visualizer.updateMap(bestMap, tries);
+            
+            // Remove this step from current path before returning
+            currentPath.remove(currentPath.size() - 1);
+            System.out.println("Found exit! Removing last step and backtracking.");
             return;
         }
 
@@ -250,9 +288,11 @@ public class App {
         if (map[r][c] == 'K' && !hasKey) {
             hasKey = true;
             pickedKey = true;
-            System.out.println("Key Taken");
+            System.out.println("Key Taken at [" + r + "," + c + "]");
         }
 
+        boolean moveFound = false; // Flag to check if any valid moves were found
+        
         for (int d = 0; d < 4; d++) {
             int nr = r + dr[d], nc = c + dc[d];
 
@@ -262,6 +302,7 @@ public class App {
                 if (map[nr][nc] == 'E' && !hasKey)
                     continue;
 
+                moveFound = true; // Valid move found
                 char temp = map[nr][nc];
                 if (temp != 'E' && temp != 'P' && temp != 'K')
                     map[nr][nc] = '-'; // Mark path with -
@@ -272,11 +313,33 @@ public class App {
                     map[nr][nc] = ' '; // Unmark if not correct path
             }
         }
+        
+        // If no valid moves or backtracking, add a backtrack step
+        if (!moveFound) {
+            System.out.println("No valid moves from [" + r + "," + c + "], backtracking");
+        }
 
         // Restore original cell content when backtracking
         if (originalCell != 'P' && originalCell != 'E' && originalCell != 'K') {
             map[r][c] = originalCell;
         }
+        
+        // Record backtracking in current path
+        currentPath.add(new MovementStep(r, c, 'B'));
+        System.out.println("Backtracking from [" + r + "," + c + "]");
+        
+        // Visualize backtracking
+        visualizer.updateMap(map, tries);
+        
+        // Remove both steps (the forward and backward moves)
+        if (currentPath.size() >= 2) {
+            currentPath.remove(currentPath.size() - 1); // Remove backtrack step
+            currentPath.remove(currentPath.size() - 1); // Remove forward step
+        } else if (currentPath.size() == 1) {
+            currentPath.remove(0); // Remove the only step if there's just one
+        }
+        
+        visited[r][c] = false; // Mark as unvisited during backtracking
 
         if (pickedKey)
             hasKey = false; // Backtrack key pickup
@@ -1134,6 +1197,73 @@ public class App {
             hasKey = false;
             gold += 40; // Corrected from 50 to 40
         }
+    }
+
+    // Method to demonstrate the best path step by step
+    static void showBestPathStepByStep(char[][] originalMap) {
+        if (bestSolutionPath.isEmpty()) {
+            System.out.println("No path found to demonstrate.");
+            return;
+        }
+        
+        System.out.println("\nDemonstrating best path step by step:");
+        
+        // Create a clean copy of the original map
+        char[][] demonstrationMap = new char[originalMap.length][originalMap[0].length];
+        for (int i = 0; i < originalMap.length; i++) {
+            demonstrationMap[i] = originalMap[i].clone();
+        }
+        
+        // Find start position
+        int[] start = findChar(originalMap, 'P');
+        int r = start[0];
+        int c = start[1];
+        
+        // Pause between steps
+        try {
+            Thread.sleep(1000);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+        
+        System.out.println("Starting at [" + r + "," + c + "]");
+        
+        // Go through each step in the best solution path
+        for (int i = 0; i < bestSolutionPath.size(); i++) {
+            MovementStep step = bestSolutionPath.get(i);
+            
+            // Skip backtrack steps in the visualization
+            if (step.type == 'B') {
+                continue;
+            }
+            
+            r = step.row;
+            c = step.col;
+            
+            // Mark current position
+            char originalCell = demonstrationMap[r][c];
+            if (originalCell != 'P' && originalCell != 'E' && originalCell != 'K') {
+                demonstrationMap[r][c] = '*';
+            }
+            
+            // Update the visualization
+            visualizer.updateMap(demonstrationMap, i+1);
+            System.out.println("Step " + (i+1) + ": Move to [" + r + "," + c + "]");
+            
+            // Pause between steps
+            try {
+                Thread.sleep(500);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+            
+            // Mark path
+            if (originalCell != 'P' && originalCell != 'E' && originalCell != 'K') {
+                demonstrationMap[r][c] = '-';
+            }
+        }
+        
+        System.out.println("Path demonstration complete!");
     }
 }
 
