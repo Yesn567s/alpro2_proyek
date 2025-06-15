@@ -127,26 +127,51 @@ public class App {
         }
 
         if(mapChoice > 2) {
-            // Print all solutions that reach the exit
-            if (!allExitMaps.isEmpty()) {
-                for (int i = 0; i < allExitMaps.size(); i++) {
-                    visualizer.updateMap(allExitMaps.get(i), tries, allExitHealths.get(i));
-                    System.out.println("Showing solution #" + (i + 1) + " (Steps: " + allExitSteps.get(i) + ", Health: " + allExitHealths.get(i) + ")");
-                    try {
-                        Thread.sleep(1000); // delay
-                    } catch (InterruptedException e) {
-                        Thread.currentThread().interrupt();
+            if (mapChoice == 5 || mapChoice == 6) {
+                if (!allExitMaps.isEmpty()) {
+                    for (int i = 0; i < allExitMaps.size(); i++) {
+                        char[][] displayMap = overlayPathOnLog(allExitLogMaps.get(i), allExitMaps.get(i));
+                        visualizer.updateMap(displayMap, tries, allExitHealths.get(i));
+                        System.out.println("Showing solution #" + (i + 1) + " (Steps: " + allExitSteps.get(i) + ", Health: " + allExitHealths.get(i) + ")");
+                        try {
+                            Thread.sleep(1000); // delay
+                        } catch (InterruptedException e) {
+                            Thread.currentThread().interrupt();
+                        }
                     }
+                    visualizer.updateMap(bestMap, tries, bestHealth);
+                    System.out.println("All solutions that reach the exit:");
+                    for (int i = 0; i < allExitMaps.size(); i++) {
+                        char[][] displayMap = overlayPathOnLog(allExitLogMaps.get(i), allExitMaps.get(i));
+                        System.out.println("Solution #" + (i + 1) + " (Steps: " + allExitSteps.get(i) + ", Health: " + allExitHealths.get(i) + "):");
+                        FileReader2DArray.print2DCharMap(displayMap);
+                        System.out.println();
+                    }
+                } else {
+                    System.out.println("No path found.");
                 }
-                visualizer.updateMap(bestMap, tries);
-                System.out.println("All solutions that reach the exit:");
-                for (int i = 0; i < allExitMaps.size(); i++) {
-                    System.out.println("Solution #" + (i + 1) + " (Steps: " + allExitSteps.get(i) + ", Health: " + allExitHealths.get(i) + "):");
-                    FileReader2DArray.print2DCharMap(allExitMaps.get(i));
-                    System.out.println();
+            }else{
+                // Print all solutions that reach the exit
+                if (!allExitMaps.isEmpty()) {
+                    for (int i = 0; i < allExitMaps.size(); i++) {
+                        visualizer.updateMap(allExitMaps.get(i), tries, allExitHealths.get(i));
+                        System.out.println("Showing solution #" + (i + 1) + " (Steps: " + allExitSteps.get(i) + ", Health: " + allExitHealths.get(i) + ")");
+                        try {
+                            Thread.sleep(1000); // delay
+                        } catch (InterruptedException e) {
+                            Thread.currentThread().interrupt();
+                        }
+                    }
+                    visualizer.updateMap(bestMap, tries);
+                    System.out.println("All solutions that reach the exit:");
+                    for (int i = 0; i < allExitMaps.size(); i++) {
+                        System.out.println("Solution #" + (i + 1) + " (Steps: " + allExitSteps.get(i) + ", Health: " + allExitHealths.get(i) + "):");
+                        FileReader2DArray.print2DCharMap(allExitMaps.get(i));
+                        System.out.println();
+                    }
+                } else {
+                    System.out.println("No path found.");
                 }
-            } else {
-                System.out.println("No path found.");
             }
         }
 
@@ -518,6 +543,7 @@ public class App {
             hasKey = false;
     }
 
+    static List<char[][]> allExitLogMaps = new ArrayList<>();
     // Main backtracking for map 5
     static void backtrackMap5(
             char[][] map,
@@ -575,10 +601,11 @@ public class App {
         if (map[r][c] == 'E' && hasKey) {
             if (steps < minSteps || (steps == minSteps && health > bestHealth)) {
                 minSteps = steps;
-                // Copy the pathMap as the bestMap
-                bestMap = new char[pathMap.length][pathMap[0].length];
-                for (int i = 0; i < pathMap.length; i++)
-                    bestMap[i] = pathMap[i].clone();
+                // Overlay path on log map for bestMap
+                char[][] logMap = new char[map.length][map[0].length];
+                for (int i = 0; i < map.length; i++)
+                    logMap[i] = map[i].clone();
+                bestMap = overlayPathOnLog(logMap, pathMap);
                 bestHealth = health;
                 System.out.println("Found exit at (" + r + "," + c + ") in " + steps + " steps!");
             }
@@ -586,6 +613,11 @@ public class App {
             for (int i = 0; i < pathMap.length; i++) {
                 solutionMap[i] = pathMap[i].clone();
             }
+            char[][] logMap = new char[map.length][map[0].length];
+            for (int i = 0; i < map.length; i++) {
+                logMap[i] = map[i].clone();
+            }
+            allExitLogMaps.add(logMap);
             allExitMaps.add(solutionMap);
             allExitSteps.add(steps);
             allExitHealths.add(health);
@@ -671,6 +703,7 @@ public class App {
 
             // Simulate log movement
             char[][] newMap = copyMap(map);
+            
             moveLogs(newMap);
 
             char afterMove = newMap[nr][nc];
@@ -721,6 +754,21 @@ public class App {
         }
     }
 
+    // Overlay path markers ('*', '-') from pathMap onto logMap for display
+    static char[][] overlayPathOnLog(char[][] logMap, char[][] pathMap) {
+        char[][] result = new char[logMap.length][logMap[0].length];
+        for (int i = 0; i < logMap.length; i++) {
+            for (int j = 0; j < logMap[0].length; j++) {
+                if (pathMap[i][j] == '*' || pathMap[i][j] == '-') {
+                    result[i][j] = pathMap[i][j];
+                } else {
+                    result[i][j] = logMap[i][j];
+                }
+            }
+        }
+        return result;
+    }
+
     // Helper to encode monster positions for visited state
     static String encodeMonsters(char[][] map) {
         StringBuilder sb = new StringBuilder();
@@ -755,14 +803,15 @@ public class App {
             }
         }
         return sb.toString();
-    }
-
-    // Move all logs in the map one step to the right on their water line
+    }      
+    
+    // Move logs in the map horizontally and vertically on water
     static void moveLogs(char[][] map) {
         // Debug: print log positions before move
         // System.out.print("Log positions before move: ");
         // System.out.println(encodeLogs(map));
 
+        // Handle horizontal log movement (row by row)
         for (int row = 0; row < map.length; row++) {
             int left = -1, right = -1;
             for (int col = 0; col < map[0].length; col++) {
@@ -784,12 +833,71 @@ public class App {
                 map[row][col] = hasLog[idx] ? 'O' : 'A';
             }
         }
-
+        
+        // Handle vertical log movement for any vertical water channels
+        // Scan each column for vertical water channels
+        for (int col = 0; col < map[0].length; col++) {
+            int top = -1, bottom = -1;
+            
+            // Find continuous vertical water channels
+            for (int r = 0; r < map.length; r++) {
+                if (map[r][col] == 'A' || map[r][col] == 'O') {
+                    if (top == -1) {
+                        top = r;
+                    }
+                    bottom = r;
+                } else if (top != -1) {
+                    // Found a break in the vertical water channel, process this segment
+                    if (bottom > top) {
+                        processVerticalLogMovement(map, top, bottom, col);
+                    }
+                    // Reset to find the next vertical water channel in this column
+                    top = -1;
+                    bottom = -1;
+                }
+            }
+            
+            // Process the last vertical water channel in this column if it exists
+            if (top != -1 && bottom > top) {
+                processVerticalLogMovement(map, top, bottom, col);
+            }
+        }
+        
         // Debug: print log positions after move
         // System.out.print("Log positions after move: ");
         // System.out.println(encodeLogs(map));
+        
+        // Add visualization update to see the logs move
+        if (visualizer != null) {
+            visualizer.updateMap(map, tries);
+        }
+    }
+    
+    // Helper method to process vertical log movement in a water channel
+    static void processVerticalLogMovement(char[][] map, int top, int bottom, int col) {
+        // Ensure we have at least 2 cells for movement
+        if (bottom - top < 1) return;
+        
+        boolean[] hasVerticalLog = new boolean[bottom - top + 1];
+        
+        // Record current log positions
+        for (int r = top; r <= bottom; r++) {
+            if (map[r][col] == 'O') {
+                hasVerticalLog[r - top] = true;
+            }
+        }
+        
+        // Move logs down (vertical movement)
+        for (int r = top; r <= bottom; r++) {
+            // This formula moves logs down by 1 position with wrapping
+            int idx = (r - top - 1 + (bottom - top + 1)) % (bottom - top + 1);
+            map[r][col] = hasVerticalLog[idx] ? 'O' : 'A';
+        }
     }
 
+    static int[] portal1 = null;
+    static int[] portal2 = null;
+    
     // Deep copy a 2D char array
     static char[][] copyMap(char[][] map) {
         char[][] newMap = new char[map.length][map[0].length];
@@ -797,9 +905,6 @@ public class App {
             newMap[i] = map[i].clone();
         return newMap;
     }
-
-    static int[] portal1 = null;
-    static int[] portal2 = null;
 
     static void backtrackMap6(
             char[][] map,
@@ -857,10 +962,11 @@ public class App {
         if (map[r][c] == 'E' && hasKey) {
             if (steps < minSteps || (steps == minSteps && health > bestHealth)) {
                 minSteps = steps;
-                // Copy the pathMap as the bestMap
-                bestMap = new char[pathMap.length][pathMap[0].length];
-                for (int i = 0; i < pathMap.length; i++)
-                    bestMap[i] = pathMap[i].clone();
+                // Overlay path on log map for bestMap
+                char[][] logMap = new char[map.length][map[0].length];
+                for (int i = 0; i < map.length; i++)
+                    logMap[i] = map[i].clone();
+                bestMap = overlayPathOnLog(logMap, pathMap);
                 bestHealth = health;
                 System.out.println("Found exit at (" + r + "," + c + ") in " + steps + " steps!");
             }
@@ -868,6 +974,11 @@ public class App {
             for (int i = 0; i < pathMap.length; i++) {
                 solutionMap[i] = pathMap[i].clone();
             }
+            char[][] logMap = new char[map.length][map[0].length];
+            for (int i = 0; i < map.length; i++) {
+                logMap[i] = map[i].clone();
+            }
+            allExitLogMaps.add(logMap);
             allExitMaps.add(solutionMap);
             allExitSteps.add(steps);
             allExitHealths.add(health);
@@ -976,6 +1087,7 @@ public class App {
 
             // Simulate log movement
             char[][] newMap = copyMap(map);
+            
             moveLogs(newMap);
 
             char afterMove = newMap[nr][nc];
@@ -1024,3 +1136,6 @@ public class App {
         }
     }
 }
+
+
+
