@@ -73,56 +73,52 @@ public class App {
         for (Movement move : original) {
             copy.add(new Movement(move.row, move.col, move.direction, move.action));
         }
-        return copy;
-    }    public static void main(String[] args) throws Exception {
+        return copy;    }
+    
+    public static void main(String[] args) throws Exception {
         // Declare variables outside try block so they're accessible throughout the method
         int mapChoice = 0;
-        Scanner scInt = null;
         String mapFile = "";
         int initialHealth = 0;
         
-        try {
-            scInt = new Scanner(System.in);
+        try (Scanner scInt = new Scanner(System.in)) {
             System.out.print("Select map to use: ");
             mapChoice = scInt.nextInt();
-            
-        switch (mapChoice) {
-            case 1:
-                mapFile = "Alpro_proyek/src/Z_array1.txt";
-                break;
-            case 2:
-                mapFile = "Alpro_proyek/src/Z_array2.txt";
-                break;
-            case 3:
-                initialHealth = 200;
-                mapFile = "Alpro_proyek/src/Z_array3.txt";
-                break;
-            case 4:
-                initialHealth = 200;
-                mapFile = "Alpro_proyek/src/Z_array4.txt";
-                break;
-            case 5:
-                initialHealth = 200;
-                mapFile = "Alpro_proyek/src/Z_array5.txt";
-                break;
-            case 6:
-                initialHealth = 200;
-                mapFile = "Alpro_proyek/src/Z_array6.txt";
-                break;
-            case 7:
-                initialHealth = 200;
-                mapFile = "Alpro_proyek/src/Z_array7.txt";
-                break;            default:                System.out.println("Invalid map selection.");
-                if (scInt != null) scInt.close();
-                return;
-        }
+            switch (mapChoice) {
+                case 1:
+                    mapFile = "Alpro_proyek/src/Z_array1.txt";
+                    break;
+                case 2:
+                    mapFile = "Alpro_proyek/src/Z_array2.txt";
+                    break;
+                case 3:
+                    initialHealth = 200;
+                    mapFile = "Alpro_proyek/src/Z_array3.txt";
+                    break;
+                case 4:
+                    initialHealth = 200;
+                    mapFile = "Alpro_proyek/src/Z_array4.txt";
+                    break;
+                case 5:
+                    initialHealth = 200;
+                    mapFile = "Alpro_proyek/src/Z_array5.txt";
+                    break;
+                case 6:
+                    initialHealth = 200;
+                    mapFile = "Alpro_proyek/src/Z_array6.txt";
+                    break;
+                case 7:
+                    initialHealth = 200;
+                    mapFile = "Alpro_proyek/src/Z_array7.txt";
+                    break;            
+                default:                
+                    System.out.println("Invalid map selection.");
+                    return;
+            }
         } catch (Exception e) {
             System.out.println("Error reading map selection: " + e.getMessage());
-            if (scInt != null) scInt.close();
             return;
-        }
-
-        char[][] map = FileReader2DArray.read2DCharMapFromFile(mapFile);
+        }        char[][] map = FileReader2DArray.read2DCharMapFromFile(mapFile);
         int[] start = findChar(map, 'P');
         // Check start position
         if (start == null) {
@@ -239,8 +235,7 @@ public class App {
             } catch (Exception e) {
                 e.printStackTrace();
             }
-            
-            try {
+              try {
                 // Reset the map to initial state
                 char[][] initialMap = FileReader2DArray.read2DCharMapFromFile(mapFile);
                 int currentHealth = initialHealth;
@@ -372,12 +367,10 @@ public class App {
             } catch (Exception e) {
                 System.out.println("Error in visualization: " + e.getMessage());
                 e.printStackTrace();
-            }
-        } else {
+            }        } else {
             System.out.println("No path found.");
             System.out.println("Tries: " + tries);
         }
-          // We're not closing Scanner here anymore
     }
 
     // Find the position of a character in the map
@@ -518,7 +511,9 @@ public class App {
             // Don't remove the movement record again, already handled above
         }
         visited[r][c] = false;
-    }    static int bestHealth = -1;
+    }
+    
+    static int bestHealth = -1;
 
     // Backtracking for map 3 with health and lava
     static void backtrackWithHealth(char[][] map, boolean[][] visited, int r, int c, int steps, boolean hasKey,
@@ -606,12 +601,10 @@ public class App {
         visited[r][c] = true;
         
         // Process special cells
-        boolean pickedKey = false;
-        if (map[r][c] == 'K' && !hasKey) {
+        boolean pickedKey = false;        if (map[r][c] == 'K' && !hasKey) {
             hasKey = true;
             pickedKey = true;
-            System.out.println("Key Taken at step " + steps);
-            // Don't add a movement here - it's handled in the recursive call
+            System.out.println("Picked up key");
         }
         
         // Try each direction
@@ -676,6 +669,15 @@ public class App {
             boolean[][][][][] visited, // [row][col][pickaxe][sword][gold]
             int r, int c, int steps, boolean hasKey,
             int health, boolean hasPickaxe, boolean hasSword, int gold) {
+        // Debug print to verify movement
+        if (tries % 10000 == 0) {
+            System.out.println("Exploring: (" + r + "," + c + "), steps: " + steps + ", health: " + health);
+        }
+        
+        // Early pruning to avoid exploring paths worse than best solution
+        if (steps > minSteps && minSteps != Integer.MAX_VALUE) {
+            return;
+        }
         
         // Only update visualization occasionally to improve performance
         if (tries % 10000 == 0) {
@@ -721,8 +723,49 @@ public class App {
                 for (int i = 0; i < map.length; i++) {
                     bestMap[i] = map[i].clone();
                 }
+                  // Initialize if needed
+                if (bestSolutionMoves == null) {
+                    bestSolutionMoves = new ArrayList<>();
+                }
+                
+                // Create a fresh list for the solution
+                bestSolutionMoves = new ArrayList<>();
+                  // For Map 4, find the start position directly
+                int[] startPos = null;
+                try {
+                    // Try to find 'P' in the map passed to this method
+                    for (int i = 0; i < map.length; i++) {
+                        for (int j = 0; j < map[0].length; j++) {
+                            if (map[i][j] == 'P') {
+                                startPos = new int[] { i, j };
+                                break;
+                            }
+                        }
+                        if (startPos != null) break;
+                    }
+                } catch (Exception e) {
+                    System.out.println("Error finding start position in Map 4: " + e.getMessage());
+                }
+                
+                if (startPos != null) {
+                    // Start with position before first move
+                    bestSolutionMoves.add(new Movement(startPos[0], startPos[1], -1, 'P'));
+                }
+                
+                // Add all moves from current path
+                for (Movement move : currentMoves) {
+                    bestSolutionMoves.add(new Movement(move.row, move.col, move.direction, move.action));
+                }
+                
+                // Add final move to exit if needed
+                if (!currentMoves.isEmpty() && 
+                    !(currentMoves.get(currentMoves.size()-1).row == r && 
+                    currentMoves.get(currentMoves.size()-1).col == c)) {
+                    bestSolutionMoves.add(new Movement(r, c, -1, 'E')); 
+                }
                 
                 System.out.println("Found exit at (" + r + "," + c + ") in " + steps + " steps with " + health + " health!");
+                System.out.println("Solution recorded with " + bestSolutionMoves.size() + " movements.");
             }
             
             // Record this solution
@@ -750,24 +793,33 @@ public class App {
         visited[r][c][pickaxeInt][swordInt][goldInt] = true;
 
         // Process pickups and special cells
+        boolean pickedPickaxe = false, pickedSword = false, minedGold = false, boughtKey = false, 
+                defeatedMonster = false, stepOnLava = false;
+
         // Pickaxe
         if (map[r][c] == 'X' && !hasPickaxe) {
             hasPickaxe = true;
+            pickedPickaxe = true;
             map[r][c] = ' ';
             System.out.println("Pickaxe obtained at (" + r + "," + c + ")");
+            currentMoves.add(new Movement(r, c, -1, 'X'));
         }
         // Sword
         if (map[r][c] == 'W' && !hasSword) {
             hasSword = true;
+            pickedSword = true;
             map[r][c] = ' ';
             System.out.println("Sword obtained at (" + r + "," + c + ")");
+            currentMoves.add(new Movement(r, c, -1, 'W'));
         }
         // Gold vein
         if (map[r][c] == 'G') {
             if (hasPickaxe) {
                 gold += 10;
                 map[r][c] = ' '; // Remove gold vein
+                minedGold = true;
                 System.out.println("Gold mined at (" + r + "," + c + "), total gold: " + gold);
+                currentMoves.add(new Movement(r, c, -1, 'G'));
             }
         }
         // Monster
@@ -775,7 +827,9 @@ public class App {
             if (hasSword) {
                 gold += 10;
                 map[r][c] = ' '; // Remove monster
+                defeatedMonster = true;
                 System.out.println("Monster defeated at (" + r + "," + c + "), total gold: " + gold);
+                currentMoves.add(new Movement(r, c, -1, 'M'));
             } else {
                 health -= 100;
                 System.out.println("Attacked by monster at (" + r + "," + c + "), health now: " + health);
@@ -789,19 +843,21 @@ public class App {
             if (gold >= 50 && !hasKey) {
                 hasKey = true;
                 gold -= 50;
+                boughtKey = true;
                 System.out.println("Key bought from NPC at (" + r + "," + c + "), gold left: " + gold);
+                currentMoves.add(new Movement(r, c, -1, 'N'));
             }
         }
         // Lava damage
         if (map[r][c] == 'L') {
             health -= 50;
+            stepOnLava = true;
             System.out.println("Stepped on lava at (" + r + "," + c + "), health now: " + health);
+            currentMoves.add(new Movement(r, c, -1, 'L'));
             if (health <= 0) {
                 return;
             }
-        }
-        
-        // Try each direction
+        }        // Try each direction
         for (int d = 0; d < 4; d++) {
             int nr = r + dr[d], nc = c + dc[d];
             
@@ -816,9 +872,50 @@ public class App {
                 continue;
             }
             
+            // Record movement before recursing - capture the destination cell type
+            char destCellType = map[nr][nc];
+            currentMoves.add(new Movement(nr, nc, d, destCellType));
+            
             backtrackMap4(map, visited, nr, nc, steps + 1, hasKey, health, hasPickaxe, hasSword, gold);
-        }        // Cleanup when backtracking - restore state
+            
+            // Remove movement when backtracking
+            if (!currentMoves.isEmpty()) {
+                currentMoves.remove(currentMoves.size() - 1);
+            }
+        }
+
+        // Cleanup when backtracking - restore state
         visited[r][c][pickaxeInt][swordInt][goldInt] = false;
+          // Restore items as needed - but don't remove from currentMoves again (already done above)
+        if (pickedPickaxe) {
+            hasPickaxe = false;
+            map[r][c] = 'X';
+        }
+        if (pickedSword) {
+            hasSword = false;
+            map[r][c] = 'W';
+        }
+        if (minedGold) {
+            gold -= 10;
+            map[r][c] = 'G';
+        }
+        if (defeatedMonster) {
+            gold -= 10;
+            map[r][c] = 'M';
+        }
+        if (boughtKey) {
+            hasKey = false;
+            gold += 50;
+            if (!currentMoves.isEmpty() && currentMoves.get(currentMoves.size() - 1).action == 'N') {
+                currentMoves.remove(currentMoves.size() - 1);
+            }
+        }
+        if (stepOnLava) {
+            health += 50;
+            if (!currentMoves.isEmpty() && currentMoves.get(currentMoves.size() - 1).action == 'L') {
+                currentMoves.remove(currentMoves.size() - 1);
+            }
+        }
     }    // Main backtracking for map 5
     static void backtrackMap5(
             char[][] map,
@@ -982,34 +1079,11 @@ public class App {
         // Try each direction
         for (int d = 0; d < 4; d++) {
             int nr = r + dr[d], nc = c + dc[d];
-<<<<<<< Updated upstream
-            if (nr < 0 || nr >= map.length || nc < 0 || nc >= map[0].length)
-                continue;
-
-            // Simulate log movement
-            char[][] newMap = copyMap(map);
-            moveLogs(newMap);
-
-            char afterMove = newMap[nr][nc];
-
-            // Check if can step
-            boolean canStep = false;
-            if (afterMove == ' ' || afterMove == 'K' || afterMove == 'E' || afterMove == 'L' || afterMove == 'X'
-                    || afterMove == 'G' || afterMove == 'N' || afterMove == 'W' || afterMove == 'M') {
-                canStep = true;
-            } else if (afterMove == 'O') {
-                canStep = true; // log on water
-            } else if (afterMove == 'A') {
-                canStep = false; // water without log
-            } else {
-                canStep = false; // wall or S
-=======
             
             // Check if move is valid
             if (nr < 0 || nr >= map.length || nc < 0 || nc >= map[0].length ||
                 FileReader2DArray.isWall(map, nr, nc)) {
                 continue;
->>>>>>> Stashed changes
             }
             
             // Don't allow entering exit without key
@@ -1099,14 +1173,13 @@ public class App {
             }
         }
         return sb.toString();
-    }
-
-    // Move all logs in the map one step to the right on their water line
+    }      // Move logs in the map horizontally and vertically on water
     static void moveLogs(char[][] map) {
         // Debug: print log positions before move
         // System.out.print("Log positions before move: ");
         // System.out.println(encodeLogs(map));
 
+        // Handle horizontal log movement (row by row)
         for (int row = 0; row < map.length; row++) {
             int left = -1, right = -1;
             for (int col = 0; col < map[0].length; col++) {
@@ -1128,9 +1201,6 @@ public class App {
                 map[row][col] = hasLog[idx] ? 'O' : 'A';
             }
         }
-<<<<<<< Updated upstream
-
-=======
         
     // Handle vertical log movement for any vertical water channels
         // Scan each column for vertical water channels
@@ -1161,28 +1231,48 @@ public class App {
             }
         }
         
->>>>>>> Stashed changes
         // Debug: print log positions after move
         // System.out.print("Log positions after move: ");
         // System.out.println(encodeLogs(map));
+        
+        // Add visualization update to see the logs move
+        if (visualizer != null) {
+            visualizer.updateMap(map, tries);
+        }
+    }
+    
+    // Helper method to process vertical log movement in a water channel
+    static void processVerticalLogMovement(char[][] map, int top, int bottom, int col) {
+        // Ensure we have at least 2 cells for movement
+        if (bottom - top < 1) return;
+        
+        boolean[] hasVerticalLog = new boolean[bottom - top + 1];
+        
+        // Record current log positions
+        for (int r = top; r <= bottom; r++) {
+            if (map[r][col] == 'O') {
+                hasVerticalLog[r - top] = true;
+            }
+        }
+        
+        // Move logs down (vertical movement)
+        for (int r = top; r <= bottom; r++) {
+            // This formula moves logs down by 1 position with wrapping
+            int idx = (r - top - 1 + (bottom - top + 1)) % (bottom - top + 1);
+            map[r][col] = hasVerticalLog[idx] ? 'O' : 'A';
+        }
     }
 
+    static int[] portal1 = null;
+    static int[] portal2 = null;
+    
     // Deep copy a 2D char array
     static char[][] copyMap(char[][] map) {
         char[][] newMap = new char[map.length][map[0].length];
         for (int i = 0; i < map.length; i++)
             newMap[i] = map[i].clone();
         return newMap;
-<<<<<<< Updated upstream
-    }
-
-    static int[] portal1 = null;
-    static int[] portal2 = null;
-
-    static void backtrackMap6(
-=======
     }    static void backtrackMap6(
->>>>>>> Stashed changes
             char[][] map,
             HashSet<String> visited,
             int r, int c,
@@ -1193,6 +1283,11 @@ public class App {
             boolean hasSword,
             int gold,
             char[][] pathMap) {
+        // Early pruning - more aggressive conditions
+        if ((steps > minSteps && minSteps != Integer.MAX_VALUE) || 
+            (steps == minSteps && health <= bestHealth && minSteps != Integer.MAX_VALUE)) {
+            return; // Don't continue if we're already worse than the best solution
+        }
         
         // First clear any * from pathMap (previous player position)
         for (int i = 0; i < pathMap.length; i++) {
@@ -1212,7 +1307,7 @@ public class App {
 
         // Limit visualization to reduce processing
         if (tries % 10000 == 0) {
-            visualizer.updateMap(pathMap, tries, health);
+            visualizer.updateMap(pathMap, tries);
         }
         tries++;
 
@@ -1220,12 +1315,12 @@ public class App {
         if (map[r][c] == '1' && portal2 != null) {
             r = portal2[0];
             c = portal2[1];
+            // Teleport movement is handled in the state encoding
         } else if (map[r][c] == '2' && portal1 != null) {
             r = portal1[0];
             c = portal1[1];
-        }
-        
-        // Encode state to prevent revisiting the same state
+            // Teleport movement is handled in the state encoding
+        }        // Encode state to prevent revisiting the same state - include more state info
         String state = r + "," + c + "," + hasKey + "," + hasPickaxe + "," + hasSword + "," + gold + "," + health
                 + "|" + encodeGoldVeins(map)
                 + "|" + encodeMonsters(map)
@@ -1248,7 +1343,8 @@ public class App {
         }
 
         // Check if we've reached the exit with a key
-        if (map[r][c] == 'E' && hasKey) {            // If this solution is better than the current best
+        if (map[r][c] == 'E' && hasKey) {
+            // If this solution is better than the current best
             if (steps < minSteps || (steps == minSteps && health > bestHealth)) {
                 minSteps = steps;
                 // Copy the pathMap as the bestMap
@@ -1257,135 +1353,44 @@ public class App {
                     bestMap[i] = pathMap[i].clone();
                 bestHealth = health;
                 System.out.println("Found exit at (" + r + "," + c + ") in " + steps + " steps with health: " + health);
-            }
-            
-            // Record this solution
-            char[][] solutionMap = new char[map.length][map[0].length];
-            for (int i = 0; i < map.length; i++) {
-                solutionMap[i] = map[i].clone();
-            }
-            allExitMaps.add(solutionMap);
-            allExitSteps.add(steps);
-            allExitHealths.add(health);
-            
-            // Restore original cell when backtracking
-            if (canBeMarked) {
-                pathMap[r][c] = originalCell;
-            }
-            return;
-        }
-        
-        // Process pickups and special cells
-        // Pickaxe
-        if (map[r][c] == 'X' && !hasPickaxe) {
-            hasPickaxe = true;
-            map[r][c] = ' ';
-            System.out.println("Pickaxe obtained at (" + r + "," + c + ")");
-        }
-        // Sword
-        if (map[r][c] == 'W' && !hasSword) {
-            hasSword = true;
-            map[r][c] = ' ';
-            System.out.println("Sword obtained at (" + r + "," + c + ")");
-        }
-        // Gold vein
-        if (map[r][c] == 'G') {
-            if (hasPickaxe) {
-                gold += 10;
-                map[r][c] = ' '; // Remove gold vein
-                System.out.println("Gold mined at (" + r + "," + c + "), total gold: " + gold);
-            }
-        }
-        // Monster
-        if (map[r][c] == 'M') {
-            if (hasSword) {
-                gold += 10;
-                map[r][c] = ' '; // Remove monster
-                System.out.println("Monster defeated at (" + r + "," + c + "), total gold: " + gold);
-            } else {
-                health -= 100;
-                System.out.println("Attacked by monster at (" + r + "," + c + "), health now: " + health);
-                if (health <= 0) {
-                    // Restore original cell when backtracking
-                    if (canBeMarked) {
-                        pathMap[r][c] = originalCell;
+                  // Initialize if needed
+                if (bestSolutionMoves == null) {
+                    bestSolutionMoves = new ArrayList<>();
+                }
+                
+                // Create a fresh list for the solution
+                bestSolutionMoves = new ArrayList<>();                // For Map 6, find the start position directly from the map
+                int[] startPos = null;
+                try {
+                    // Try to find 'P' in the map passed to this method
+                    for (int i = 0; i < map.length; i++) {
+                        for (int j = 0; j < map[0].length; j++) {
+                            if (map[i][j] == 'P') {
+                                startPos = new int[] { i, j };
+                                break;
+                            }
+                        }
+                        if (startPos != null) break;
                     }
-                    return;
-                }
-            }
-        }
-        // NPC for buying key
-        if (map[r][c] == 'N') {
-            if (gold >= 50 && !hasKey) {
-                hasKey = true;
-                gold -= 50;
-                System.out.println("Key bought from NPC at (" + r + "," + c + "), gold left: " + gold);
-            }
-        }
-        // Lava damage
-        if (map[r][c] == 'L') {
-            health -= 50;
-            System.out.println("Stepped on lava at (" + r + "," + c + "), health now: " + health);
-            if (health <= 0) {
-                // Restore original cell when backtracking
-                if (canBeMarked) {
-                    pathMap[r][c] = originalCell;
-                }
-                return;
-            }
-        }
-        
-        // Apply map changes for log movement
-        moveLogs(map);
-        
-        // Try each direction
-        int currentRow = r;
-        int currentCol = c;
-        
-        for (int d = 0; d < 4; d++) {
-            int nr = currentRow + dr[d], nc = currentCol + dc[d];
-            
-            // Skip invalid moves
-            if (nr < 0 || nr >= map.length || nc < 0 || nc >= map[0].length || 
-                FileReader2DArray.isWall(map, nr, nc)) {
-                continue;
-            }
-            
-            // Teleport logic
-            int destRow = nr;
-            int destCol = nc;
-            
-            if (map[nr][nc] == '1' && portal2 != null) {
-                destRow = portal2[0];
-                destCol = portal2[1];
-                backtrackMap6(map, visited, destRow, destCol, steps + 1, hasKey, health, hasPickaxe, hasSword, gold, pathMap);
-            } else if (map[nr][nc] == '2' && portal1 != null) {
-                destRow = portal1[0];
-                destCol = portal1[1];
-                backtrackMap6(map, visited, destRow, destCol, steps + 1, hasKey, health, hasPickaxe, hasSword, gold, pathMap);
-            } else {
-                // Don't allow entering exit without key
-                if (map[nr][nc] == 'E' && !hasKey) {
-                    continue;
+                } catch (Exception e) {
+                    System.out.println("Error finding start position: " + e.getMessage());
                 }
                 
-                // Create a copy of map for this branch
-                char[][] newMap = new char[map.length][map[0].length];
-                for (int i = 0; i < map.length; i++) {
-                    newMap[i] = map[i].clone();
+                if (startPos != null) {
+                    // Start with position before first move
+                    bestSolutionMoves.add(new Movement(startPos[0], startPos[1], -1, 'P'));
                 }
                 
-                backtrackMap6(newMap, visited, nr, nc, steps + 1, hasKey, health, hasPickaxe, hasSword, gold, pathMap);
-            }
-        }
-        
-        // Restore original cell when backtracking
-        if (canBeMarked) {
-            pathMap[r][c] = originalCell;
-        }
-        
-        // Remove state when backtracking
-        visited.remove(state);
+                // Add all moves from current path
+                for (Movement move : currentMoves) {
+                    bestSolutionMoves.add(new Movement(move.row, move.col, move.direction, move.action));
+                }
+                
+                // Add final move to exit if needed
+                if (!currentMoves.isEmpty() && 
+                    !(currentMoves.get(currentMoves.size()-1).row == r && 
+                    currentMoves.get(currentMoves.size()-1).col == c)) {
+                    bestSolutionMoves.add(new Movement(r, c, -1, 'E')); 
                 }
                 
                 System.out.println("Saved solution moves: " + bestSolutionMoves.size());
@@ -1592,3 +1597,6 @@ public class App {
         }
     }
 }
+
+
+
