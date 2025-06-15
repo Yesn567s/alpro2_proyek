@@ -127,26 +127,51 @@ public class App {
         }
 
         if(mapChoice > 2) {
-            // Print all solutions that reach the exit
-            if (!allExitMaps.isEmpty()) {
-                for (int i = 0; i < allExitMaps.size(); i++) {
-                    visualizer.updateMap(allExitMaps.get(i), tries, allExitHealths.get(i));
-                    System.out.println("Showing solution #" + (i + 1) + " (Steps: " + allExitSteps.get(i) + ", Health: " + allExitHealths.get(i) + ")");
-                    try {
-                        Thread.sleep(1000); // delay
-                    } catch (InterruptedException e) {
-                        Thread.currentThread().interrupt();
+            if (mapChoice == 5 || mapChoice == 6) {
+                if (!allExitMaps.isEmpty()) {
+                    for (int i = 0; i < allExitMaps.size(); i++) {
+                        char[][] displayMap = overlayPathOnLog(allExitLogMaps.get(i), allExitMaps.get(i));
+                        visualizer.updateMap(displayMap, tries, allExitHealths.get(i));
+                        System.out.println("Showing solution #" + (i + 1) + " (Steps: " + allExitSteps.get(i) + ", Health: " + allExitHealths.get(i) + ")");
+                        try {
+                            Thread.sleep(1000); // delay
+                        } catch (InterruptedException e) {
+                            Thread.currentThread().interrupt();
+                        }
                     }
+                    visualizer.updateMap(bestMap, tries, bestHealth);
+                    System.out.println("All solutions that reach the exit:");
+                    for (int i = 0; i < allExitMaps.size(); i++) {
+                        char[][] displayMap = overlayPathOnLog(allExitLogMaps.get(i), allExitMaps.get(i));
+                        System.out.println("Solution #" + (i + 1) + " (Steps: " + allExitSteps.get(i) + ", Health: " + allExitHealths.get(i) + "):");
+                        FileReader2DArray.print2DCharMap(displayMap);
+                        System.out.println();
+                    }
+                } else {
+                    System.out.println("No path found.");
                 }
-                visualizer.updateMap(bestMap, tries);
-                System.out.println("All solutions that reach the exit:");
-                for (int i = 0; i < allExitMaps.size(); i++) {
-                    System.out.println("Solution #" + (i + 1) + " (Steps: " + allExitSteps.get(i) + ", Health: " + allExitHealths.get(i) + "):");
-                    FileReader2DArray.print2DCharMap(allExitMaps.get(i));
-                    System.out.println();
+            }else{
+                // Print all solutions that reach the exit
+                if (!allExitMaps.isEmpty()) {
+                    for (int i = 0; i < allExitMaps.size(); i++) {
+                        visualizer.updateMap(allExitMaps.get(i), tries, allExitHealths.get(i));
+                        System.out.println("Showing solution #" + (i + 1) + " (Steps: " + allExitSteps.get(i) + ", Health: " + allExitHealths.get(i) + ")");
+                        try {
+                            Thread.sleep(1000); // delay
+                        } catch (InterruptedException e) {
+                            Thread.currentThread().interrupt();
+                        }
+                    }
+                    visualizer.updateMap(bestMap, tries);
+                    System.out.println("All solutions that reach the exit:");
+                    for (int i = 0; i < allExitMaps.size(); i++) {
+                        System.out.println("Solution #" + (i + 1) + " (Steps: " + allExitSteps.get(i) + ", Health: " + allExitHealths.get(i) + "):");
+                        FileReader2DArray.print2DCharMap(allExitMaps.get(i));
+                        System.out.println();
+                    }
+                } else {
+                    System.out.println("No path found.");
                 }
-            } else {
-                System.out.println("No path found.");
             }
         }
 
@@ -518,6 +543,7 @@ public class App {
             hasKey = false;
     }
 
+    static List<char[][]> allExitLogMaps = new ArrayList<>();
     // Main backtracking for map 5
     static void backtrackMap5(
             char[][] map,
@@ -575,10 +601,11 @@ public class App {
         if (map[r][c] == 'E' && hasKey) {
             if (steps < minSteps || (steps == minSteps && health > bestHealth)) {
                 minSteps = steps;
-                // Copy the pathMap as the bestMap
-                bestMap = new char[pathMap.length][pathMap[0].length];
-                for (int i = 0; i < pathMap.length; i++)
-                    bestMap[i] = pathMap[i].clone();
+                // Overlay path on log map for bestMap
+                char[][] logMap = new char[map.length][map[0].length];
+                for (int i = 0; i < map.length; i++)
+                    logMap[i] = map[i].clone();
+                bestMap = overlayPathOnLog(logMap, pathMap);
                 bestHealth = health;
                 System.out.println("Found exit at (" + r + "," + c + ") in " + steps + " steps!");
             }
@@ -586,6 +613,11 @@ public class App {
             for (int i = 0; i < pathMap.length; i++) {
                 solutionMap[i] = pathMap[i].clone();
             }
+            char[][] logMap = new char[map.length][map[0].length];
+            for (int i = 0; i < map.length; i++) {
+                logMap[i] = map[i].clone();
+            }
+            allExitLogMaps.add(logMap);
             allExitMaps.add(solutionMap);
             allExitSteps.add(steps);
             allExitHealths.add(health);
@@ -722,6 +754,21 @@ public class App {
         }
     }
 
+    // Overlay path markers ('*', '-') from pathMap onto logMap for display
+    static char[][] overlayPathOnLog(char[][] logMap, char[][] pathMap) {
+        char[][] result = new char[logMap.length][logMap[0].length];
+        for (int i = 0; i < logMap.length; i++) {
+            for (int j = 0; j < logMap[0].length; j++) {
+                if (pathMap[i][j] == '*' || pathMap[i][j] == '-') {
+                    result[i][j] = pathMap[i][j];
+                } else {
+                    result[i][j] = logMap[i][j];
+                }
+            }
+        }
+        return result;
+    }
+
     // Helper to encode monster positions for visited state
     static String encodeMonsters(char[][] map) {
         StringBuilder sb = new StringBuilder();
@@ -756,7 +803,9 @@ public class App {
             }
         }
         return sb.toString();
-    }      // Move logs in the map horizontally and vertically on water
+    }      
+    
+    // Move logs in the map horizontally and vertically on water
     static void moveLogs(char[][] map) {
         // Debug: print log positions before move
         // System.out.print("Log positions before move: ");
@@ -913,10 +962,11 @@ public class App {
         if (map[r][c] == 'E' && hasKey) {
             if (steps < minSteps || (steps == minSteps && health > bestHealth)) {
                 minSteps = steps;
-                // Copy the pathMap as the bestMap
-                bestMap = new char[pathMap.length][pathMap[0].length];
-                for (int i = 0; i < pathMap.length; i++)
-                    bestMap[i] = pathMap[i].clone();
+                // Overlay path on log map for bestMap
+                char[][] logMap = new char[map.length][map[0].length];
+                for (int i = 0; i < map.length; i++)
+                    logMap[i] = map[i].clone();
+                bestMap = overlayPathOnLog(logMap, pathMap);
                 bestHealth = health;
                 System.out.println("Found exit at (" + r + "," + c + ") in " + steps + " steps!");
             }
@@ -924,6 +974,11 @@ public class App {
             for (int i = 0; i < pathMap.length; i++) {
                 solutionMap[i] = pathMap[i].clone();
             }
+            char[][] logMap = new char[map.length][map[0].length];
+            for (int i = 0; i < map.length; i++) {
+                logMap[i] = map[i].clone();
+            }
+            allExitLogMaps.add(logMap);
             allExitMaps.add(solutionMap);
             allExitSteps.add(steps);
             allExitHealths.add(health);
