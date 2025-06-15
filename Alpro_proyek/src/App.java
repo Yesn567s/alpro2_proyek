@@ -155,7 +155,7 @@ public class App {
                         visualizer.updateMap(displayMap, tries, allExitHealths.get(i));
                         System.out.println("Showing solution #" + (i + 1) + " (Steps: " + allExitSteps.get(i) + ", Health: " + allExitHealths.get(i) + ")");
                         try {
-                            Thread.sleep(1000); // delay
+                            Thread.sleep(125); // delay
                         } catch (InterruptedException e) {
                             Thread.currentThread().interrupt();
                         }
@@ -750,14 +750,42 @@ public class App {
         // Reduce health if on lava
         if (map[r][c] == 'L') {
             health -= 50;
-            if (health <= 0) {
-                // Restore original cell when backtracking
-                if (canBeMarked) {
-                    pathMap[r][c] = originalCell;
-                }
+            if (health <= 0)
+                return;
+        }
+
+        // Portal logic: teleport if on '1' or '2'
+        if (map[r][c] == '1' && portal2 != null) {
+            int destRow = portal2[0] - 1;
+            int destCol = portal2[1];
+            // Only teleport if destination is within bounds and not a wall
+            if (destRow >= 0 && !FileReader2DArray.isWall(map, destRow, destCol)) {
+                System.out.println("Portal used: from (1) at (" + r + "," + c + ") to above (2) at (" + destRow + ","
+                        + destCol + ")");
+                backtrackMap6(map, visited, destRow, destCol, steps + 1, hasKey, health, hasPickaxe, hasSword, gold,
+                        pathMap);
+                return; // Do not continue normal movement from here
+            }
+        }
+
+        if (map[r][c] == '2' && portal1 != null) {
+            int destRow = portal1[0] - 1;
+            int destCol = portal1[1];
+            if (destRow >= 0 && !FileReader2DArray.isWall(map, destRow, destCol)) {
+                System.out.println("Portal used: from (2) at (" + r + "," + c + ") to above (1) at (" + destRow + ","
+                        + destCol + ")");
+                backtrackMap6(map, visited, destRow, destCol, steps + 1, hasKey, health, hasPickaxe, hasSword, gold,
+                        pathMap);
                 return;
             }
-        } // Mark path is handled by the canBeMarked condition above
+        }
+
+        // Mark path for bestMap (only for the current path, not on map)
+        boolean marked = false;
+        if (pathMap[r][c] == ' ' && map[r][c] != '1' && map[r][c] != '2') {
+            pathMap[r][c] = '*';
+            marked = true;
+        }
 
         for (int d = 0; d < 4; d++) {
             int nr = r + dr[d], nc = c + dc[d];
@@ -774,7 +802,8 @@ public class App {
             // Check if can step
             boolean canStep = false;
             if (afterMove == ' ' || afterMove == 'K' || afterMove == 'E' || afterMove == 'L' || afterMove == 'X'
-                    || afterMove == 'G' || afterMove == 'N' || afterMove == 'W' || afterMove == 'M') {
+                    || afterMove == 'G' || afterMove == 'N' || afterMove == 'W' || afterMove == 'M' || afterMove == '1'
+                    || afterMove == '2') {
                 canStep = true;
             } else if (afterMove == 'O') {
                 canStep = true; // log on water
@@ -790,15 +819,12 @@ public class App {
             if (afterMove == 'E' && !hasKey)
                 continue;
 
-            backtrackMap5(newMap, visited, nr, nc, steps + 1, hasKey, health, hasPickaxe, hasSword, gold, pathMap);
-        }
-
-        // Restore original cell when backtracking
-        if (canBeMarked) {
-            pathMap[r][c] = originalCell;
+            backtrackMap6(newMap, visited, nr, nc, steps + 1, hasKey, health, hasPickaxe, hasSword, gold, pathMap);
         }
 
         // Undo actions for backtracking
+        if (marked)
+            pathMap[r][c] = ' ';
         if (pickedPickaxe)
             hasPickaxe = false;
         if (pickedPickaxe)
@@ -1228,37 +1254,133 @@ public class App {
         
         System.out.println("Starting at [" + r + "," + c + "]");
         
-        // Go through each step in the best solution path
-        for (int i = 0; i < bestSolutionPath.size(); i++) {
-            MovementStep step = bestSolutionPath.get(i);
-            
-            // Skip backtrack steps in the visualization
-            if (step.type == 'B') {
-                continue;
+        // Process only forward movement steps to show the final solution path
+        ArrayList<MovementStep> finalPath = new ArrayList<>();
+        for (MovementStep step : bestSolutionPath) {
+            if (step.type == 'F') {
+                finalPath.add(step);
             }
-            
+        }
+        
+        // Go through each step in the best solution path
+        for (int i = 0; i < finalPath.size(); i++) {
+            MovementStep step = finalPath.get(i);
             r = step.row;
             c = step.col;
             
-            // Mark current position
-            char originalCell = demonstrationMap[r][c];
-            if (originalCell != 'P' && originalCell != 'E' && originalCell != 'K') {
-                demonstrationMap[r][c] = '*';
+            // Create a fresh display map for each step starting with original map features
+            char[][] displayMap = new char[originalMap.length][originalMap[0].length];
+            for (int j = 0; j < originalMap.length; j++) {
+                displayMap[j] = originalMap[j].clone();
             }
             
+            // First mark the path up to this point
+            for (int j = 0; j < i; j++) {
+                MovementStep prevStep = finalPath.get(j);
+                int prevR = prevStep.row;
+                int prevC = prevStep.col;
+                
+                // Only mark path on empty spaces or already marked paths, preserving special cells
+                if (originalMap[prevR][prevC] == ' ' || originalMap[prevR][prevC] == '-') {
+                    displayMap[prevR][prevC] = '-';
+                }
+            }
+            
+            // Always override with player position - highest priority
+            displayMap[r][c] = '*'; // Player position always takes priority
+            
             // Update the visualization
-            visualizer.updateMap(demonstrationMap, i+1);
+            visualizer.updateMap(displayMap, i+1);
             System.out.println("Step " + (i+1) + ": Move to [" + r + "," + c + "]");
             
-            // Pause between steps
+            // Pause between steps for visibility
             try {
                 Thread.sleep(500);
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
             }
             
-            // Mark path
-            if (originalCell != 'P' && originalCell != 'E' && originalCell != 'K') {
+            // Update the demonstration map for the next iteration
+            if (originalMap[r][c] == ' ' || originalMap[r][c] == '-') {
+                demonstrationMap[r][c] = '-';
+            }
+        }
+        
+        System.out.println("Path demonstration complete!");
+    }
+    
+    // Method to demonstrate the best path step by step for maps with health (3,4,5,6)
+    static void showBestPathStepByStepWithHealth(char[][] originalMap, int mapChoice) {
+        if (bestSolutionPath.isEmpty()) {
+            System.out.println("No path found to demonstrate.");
+            return;
+        }
+        
+        System.out.println("\nDemonstrating best path step by step for map " + mapChoice + ":");
+        
+        // Create a clean copy of the original map
+        char[][] demonstrationMap = new char[originalMap.length][originalMap[0].length];
+        for (int i = 0; i < originalMap.length; i++) {
+            demonstrationMap[i] = originalMap[i].clone();
+        }
+        
+        // Process only forward movement steps to show the final solution path
+        ArrayList<MovementStep> finalPath = new ArrayList<>();
+        for (MovementStep step : bestSolutionPath) {
+            if (step.type == 'F') {
+                finalPath.add(step);
+            }
+        }
+        
+        // Initial health based on map
+        int currentHealth = 200; // Default for maps 3-6
+        
+        // Show the path step by step
+        for (int i = 0; i < finalPath.size(); i++) {
+            MovementStep step = finalPath.get(i);
+            int r = step.row;
+            int c = step.col;
+            
+            // Update health based on the cell (only for visualization purposes)
+            char cellType = originalMap[r][c];
+            if (cellType == 'L') { // Lava
+                currentHealth -= 25;
+            }
+            
+            // Create a fresh display map for each step starting with original map features
+            char[][] displayMap = new char[originalMap.length][originalMap[0].length];
+            for (int j = 0; j < originalMap.length; j++) {
+                displayMap[j] = originalMap[j].clone();
+            }
+            
+            // First mark the path up to this point
+            for (int j = 0; j < i; j++) {
+                MovementStep prevStep = finalPath.get(j);
+                int prevR = prevStep.row;
+                int prevC = prevStep.col;
+                
+                // Only mark path on empty spaces or already marked paths, preserving special cells
+                if (originalMap[prevR][prevC] == ' ' || originalMap[prevR][prevC] == '-') {
+                    displayMap[prevR][prevC] = '-';
+                }
+            }
+            
+            // Always override with player position - highest priority
+            displayMap[r][c] = '*'; // Player position always takes priority
+            
+            // Update the visualization with current health
+            visualizer.updateMap(displayMap, i+1, currentHealth);
+            System.out.println("Step " + (i+1) + ": Move to [" + r + "," + c + "], Health: " + currentHealth);
+            
+            // Pause between steps for visibility
+            try {
+                Thread.sleep(500);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+            
+            // Update the demonstration map for the next iteration
+            if (originalMap[r][c] == ' ' || originalMap[r][c] == '-') {
                 demonstrationMap[r][c] = '-';
             }
         }
