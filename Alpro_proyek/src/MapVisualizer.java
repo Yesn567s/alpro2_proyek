@@ -131,15 +131,21 @@ public class MapVisualizer extends JFrame {
                 g.drawRect(x, y, CELL_SIZE, CELL_SIZE);
 
                 // Draw cell content
-                g.setColor(Color.BLACK);
-
-                // If this is the player position, draw it differently
+                g.setColor(Color.BLACK);                // If this is the player position, draw it differently
                 if (playerRow == row && playerCol == col && currentMap[row][col] == '*') {
                     g.setColor(new Color(255, 0, 255)); // Magenta background for player
                     g.fillRect(x, y, CELL_SIZE, CELL_SIZE);
-                    g.setColor(Color.GRAY);
+                    
+                    // Add a gold border around the player position for better visibility
+                    g.setColor(Color.YELLOW);
                     g.drawRect(x, y, CELL_SIZE, CELL_SIZE);
-                    g.setColor(Color.BLACK);
+                    g.drawRect(x+1, y+1, CELL_SIZE-2, CELL_SIZE-2);
+                    
+                    // Draw a clear player symbol
+                    g.setColor(Color.WHITE);
+                    g.drawString("P", 
+                            x + CELL_SIZE / 2 - 5,
+                            y + CELL_SIZE / 2 + 5);
                 }
 
                 g.drawString(String.valueOf(currentMap[row][col]),
